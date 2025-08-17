@@ -1,8 +1,10 @@
-const express = require('express');
-const app = express();
+import { Router } from 'express';
+import userRouter from '../controllers/user.js';
+import noteRouter from '../controllers/notes.js';
 
-const userRouter = require('../controllers/user.js');
-const noteRouter = require('../controllers/notes.js');
+const router = Router();
 
-app.use('/user', userRouter);
-app.use('/note', noteRouter);
+router.use('/user', userRouter);
+router.use('/note', noteRouter);
+
+export { router };

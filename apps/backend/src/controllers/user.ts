@@ -1,14 +1,15 @@
 import { Request , Response } from 'express';
-import { userSigninMiddleware } from "../middlewares/userMiddlewares";
-// import { PrismaClient } from '@repo/db';
+import { userSigninMiddleware } from "../middlewares/userMiddlewares.js";
+// import { prisma } from '@repo/db';
 // import { withAccelerate } from '@repo/db';
-// const prisma = new PrismaClient().$extends(withAccelerate());
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const express = require('express');
+// const prisma = new prisma().$extends(withAccelerate());
+import jwt, { JwtPayload } from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import express from 'express';
 const { Router } = express;
 const router = Router();
-import { prismaClient } from '@repo/db/client';
+import { prisma } from '@notes/db';
+import { AsyncLocalStorage } from 'async_hooks';
 
 router.post('/signup', async (req:Request, res:Response) => {
     const user = req.body;
@@ -17,7 +18,7 @@ router.post('/signup', async (req:Request, res:Response) => {
         return res.status(400).json({ error: 'Email, name, and password are required' });
     }
     
-    const existingUser = await prismaClient.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
         where: { email: email },
     });
     if (existingUser) {
@@ -30,7 +31,7 @@ router.post('/signup', async (req:Request, res:Response) => {
             return res.status(500).json({ error: 'Internal server error' });
         }
         try {
-            await prismaClient.user.create({
+            await prisma.user.create({
                 data: {
                     email: email,
                     name: name,
@@ -47,7 +48,7 @@ router.post('/signup', async (req:Request, res:Response) => {
 router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) => {
     const user = req.body;
     const {name,email } = user;
-    const User = await prismaClient.user.findUnique({
+    const User = await prisma.user.findUnique({
         where: { email: email },
     });
 
@@ -55,7 +56,7 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
         return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    localStorage.setItem('name', JSON.stringify(name));
+    AsyncLocalStorage.setItem('name', JSON.stringify(name));
     const token = jwt.sign({ id: User.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
     res.header('Authorization', `Bearer ${token}`);
@@ -63,5 +64,4 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
 });
 
 
-module.exports = router;
 export default router;  

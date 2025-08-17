@@ -1,29 +1,30 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@notes/backend",
+  "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
-    "dev": "tsc -b && node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/index.js",
+    "lint": "echo \"(add eslint if you want)\"",
+    "db:generate": "prisma generate --schema ../../packages/databases/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema ../../packages/databases/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema ../../packages/databases/prisma/schema.prisma"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "@prisma/client": "^6.14.0",
-    "@repo/db": "*",
-    "@types/axios": "^0.9.36",
-    "@types/jsonwebtoken": "^9.0.10",
+    "@notes/db": "file:packages/databases",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3"
+    "@types/express": "^5.0.3",
+    "@types/node": "^20.11.19",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
   }
 }

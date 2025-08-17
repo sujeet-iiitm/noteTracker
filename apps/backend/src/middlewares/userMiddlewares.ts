@@ -1,13 +1,13 @@
-import { prismaClient } from '@repo/db/client';
+import { prisma } from '@notes/db';
 import { Request , Response, NextFunction } from 'express';
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const app = express();
+
 // import { PrismaClient } from '@prisma/client';
 // import { withAccelerate } from '@prisma/extension-accelerate';
-// const prisma = new PrismaClient().$extends(withAccelerate())
-const bcrypt = require('bcrypt');
-const cookieStore = require('cookie-store');
+// const prisma = new PrismaClient().$extends(withAccelerate());
+import jwt, { JwtPayload } from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import CookieStore from "cookie-store";
+
 
 export const userSigninMiddleware = async(req:Request, res:Response, next:NextFunction) => {
     const user = req.body;
@@ -17,7 +17,7 @@ export const userSigninMiddleware = async(req:Request, res:Response, next:NextFu
     const email = user.email;
     const password = user.password;
 
-    const User = await prismaClient.user.findUnique({
+    const User = await prisma.user.findUnique({
         where: { email: email },
     });
     if (!User) {

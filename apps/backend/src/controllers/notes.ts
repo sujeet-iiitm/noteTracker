@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
-import { userVerifyMiddleware } from "../middlewares/userMiddlewares";
-// import { PrismaClient } from '@repo/db'
+import { userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
+// import { prisma } from '@repo/db'
 // import { withAccelerate } from '@repo/db'
-// const prisma = new PrismaClient().$extends(withAccelerate());
-const jwt = require('jsonwebtoken');
-const express = require('express');
-const { Router } = express;
+// const prisma = new prisma().$extends(withAccelerate());
+import "dotenv/config"
+import jwt from 'jsonwebtoken';
+import { Router } from 'express';
 const router = Router();
-import { prismaClient } from '@repo/db/client';
+import { prisma } from '@notes/db';
 
 router.get('/allNotes' , userVerifyMiddleware, async (req:Request, res:Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
     const userId = decoded.id;
-    const notes = await prismaClient.note.findMany({
+    const notes = await prisma.note.findMany({
         where: { userId: userId },
     });
     if(!notes || notes.length === 0) {
@@ -30,7 +30,7 @@ router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response
         return;
     }
     try{
-        await prismaClient.note.create({
+        await prisma.note.create({
             data: {
                 title: title,
                 description: description,
@@ -55,7 +55,7 @@ router.put('/updateNote', userVerifyMiddleware, async(req:Request, res:Response)
         return;
     }
     try{
-        await prismaClient.note.update({
+        await prisma.note.update({
             where: { id: id, userId: userId },
             data: {
                 title: title,
@@ -76,7 +76,7 @@ router.delete('/deleteNote', userVerifyMiddleware, async(req:Request, res:Respon
     const { id } = req.body;
 
     try{
-        await prismaClient.note.delete({
+        await prisma.note.delete({
             where: { id: id, userId: userId },
         });
         res.status(200).json({message: 'Note deleted successfully'});
@@ -85,6 +85,6 @@ router.delete('/deleteNote', userVerifyMiddleware, async(req:Request, res:Respon
         res.status(500).json({ error: 'Failed to delete note' });
     }
 });
-module.exports = router;
+
 export default router;
 
