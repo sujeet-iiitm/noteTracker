@@ -4,25 +4,30 @@ import { userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
 // import { withAccelerate } from '@repo/db'
 // const prisma = new prisma().$extends(withAccelerate());
 import "dotenv/config"
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Router } from 'express';
 const router = Router();
 import { prisma } from '@notes/db';
 
 router.get('/allNotes' , userVerifyMiddleware, async (req:Request, res:Response) => {
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-    const notes = await prisma.note.findMany({
-        where: { userId: userId },
-    });
-    if(!notes || notes.length === 0) {
-        return res.status(404).json({ error: 'No notes found for this user' });
-    }
-    return res.status(200).json(notes);
+if (!process.env.JWT_SECRET) {
+throw new Error("JWT_SECRET is not defined in environment variables");
+}
+
+const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+
+const userId = decoded.id as string;
+const notes = await prisma.note.findMany({
+    where: { userId: userId },
+});
+if(!notes || notes.length === 0) {
+    return res.status(404).json({ error: 'No notes found for this user' });
+}
+return res.status(200).json(notes);
 });
 
 router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response) => {
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
     const { title, description, shortNote } = req.body;
     if(!title || !description){
@@ -46,7 +51,7 @@ router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response
 });
 
 router.put('/updateNote', userVerifyMiddleware, async(req:Request, res:Response) => {
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
     const { id, title, description, shortNote } = req.body;
 
@@ -71,7 +76,7 @@ router.put('/updateNote', userVerifyMiddleware, async(req:Request, res:Response)
 });
 
 router.delete('/deleteNote', userVerifyMiddleware, async(req:Request, res:Response) => {
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
     const { id } = req.body;
 

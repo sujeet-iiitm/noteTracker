@@ -45,6 +45,17 @@ router.post('/signup', async (req:Request, res:Response) => {
     });
 });
 
+const store = new Map<string, string>();
+const setItem = (key: string, value: string) => {
+  store.set(key, value);
+};
+const getItem = (key: string) => {
+  return store.get(key) || null;
+};
+import { LocalStorage } from "node-localstorage";
+const localStorage = new LocalStorage("./scratch");
+// const storedName = localStorage.getItem("name");
+
 router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) => {
     const user = req.body;
     const {name,email } = user;
@@ -56,8 +67,17 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
         return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    AsyncLocalStorage.setItem('name', JSON.stringify(name));
-    const token = jwt.sign({ id: User.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    localStorage.setItem("name", JSON.stringify(name));
+    if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in environment variables");
+    }
+
+    const token = jwt.sign(
+      { id: User.id },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1h" }
+    );
+
     res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
     res.header('Authorization', `Bearer ${token}`);
     res.status(200).json({ message: 'User signed in successfully', token });
