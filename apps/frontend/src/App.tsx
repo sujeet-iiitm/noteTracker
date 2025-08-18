@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Header } from "./components/Header";
-import { NoteForm, Note } from "./components/NoteForm";
-import { NotesList } from "./components/NotesList";
+import { Header } from "@repo/ui/src/Header";
+import { NoteForm, Note } from "@repo/ui/src/NoteForm";
+import { NotesList } from "@repo/ui/src/NotesList";
 import { User, BookOpen, Home } from "lucide-react";
 
 function App() {
