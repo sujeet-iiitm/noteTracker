@@ -1,5 +1,7 @@
 import { Request , Response } from 'express';
-import { userSigninMiddleware } from "../middlewares/userMiddlewares.js";
+import { userSigninMiddleware, userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
+import { OAuth2Client } from 'google-auth-library';
+
 // import { prisma } from '@repo/db';
 // import { withAccelerate } from '@repo/db';
 // const prisma = new prisma().$extends(withAccelerate());
@@ -9,7 +11,6 @@ import express from 'express';
 const { Router } = express;
 const router = Router();
 import { prisma } from '@notes/db';
-import { AsyncLocalStorage } from 'async_hooks';
 
 router.post('/signup', async (req:Request, res:Response) => {
     const user = req.body;
@@ -31,34 +32,23 @@ router.post('/signup', async (req:Request, res:Response) => {
             return res.status(500).json({ error: 'Internal server error' });
         }
         try {
-            await prisma.user.create({
+            const user = await prisma.user.create({
                 data: {
                     email: email,
                     name: name,
                     password: hashedPassword,
                 },
             });
-            res.status(200).json({message: 'User created successfully'});
         } catch (error) {
             return res.status(500).json({ error: 'Failed to create user' });
         }
     });
 });
 
-const store = new Map<string, string>();
-const setItem = (key: string, value: string) => {
-  store.set(key, value);
-};
-const getItem = (key: string) => {
-  return store.get(key) || null;
-};
-import { LocalStorage } from "node-localstorage";
-const localStorage = new LocalStorage("./scratch");
-// const storedName = localStorage.getItem("name");
 
 router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) => {
     const user = req.body;
-    const {name,email } = user;
+    const {name,email,createdAt } = user;
     const User = await prisma.user.findUnique({
         where: { email: email },
     });
@@ -67,21 +57,73 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
         return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    localStorage.setItem("name", JSON.stringify(name));
     if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not defined in environment variables");
     }
 
-    const token = jwt.sign(
-      { id: User.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" }
-    );
-
-    res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.header('Authorization', `Bearer ${token}`);
+    const token = jwt.sign({id: user.id},jwt_secret_key,
+        {expiresIn : '7d'}
+    )
+    res.cookie("token", token, {
+     httpOnly: true,
+     secure: true,
+     sameSite: "strict",
+     maxAge: 7 * 24 * 60 * 60 * 1000
+     });
+    res.json({user})
     res.status(200).json({ message: 'User signed in successfully', token });
 });
 
+router.get('/userDetails', userVerifyMiddleware , async(req:Request , res:Response) => {
+    const userId = req.params.userId;
+    const userDetails = await prisma.user.findUnique({
+        where : {userId},
+    });
+    const name = JSON.stringify(userDetails.name);
+    const email = JSON.stringify(userDetails.email);
+    const notesCount = JSON.stringify(userDetails.Notes.size());
+    const createdAt = JSON.stringify(userDetails.createdAt);
+    if(!userDetails){
+        return res.status(404).json({ message  : "user not found"});
+    }
+    return res.status(200).send({
+        name,email,notesCount,createdAt})
+});
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const jwt_secret_key = process.env.JWT_SECRET || "";
+
+router.post('/googleLogin',async(require,res) => {
+    const { credential } = require.body;
+    try{
+        const ticket = await client.verifyIdToken({
+            idToken : credential,
+            audience :process.env.GOOGLE_CLIENT_ID
+        });
+        const payload = ticket.getPayload();
+        if(!payload) return res.status(401).json({error:"invalid Token"});
+        const { name, email } = payload;
+
+        const user = await prisma.user.findUnique({where : {email}});
+        if(!user){
+            await prisma.user.create({
+                data: {email, name}
+            })
+        }
+        const token = jwt.sign({id: user.id},jwt_secret_key,
+            {expiresIn : '7d'}
+        )
+        res.cookie("token", token, {
+         httpOnly: true,
+         secure: true,
+         sameSite: "strict",
+         maxAge: 7 * 24 * 60 * 60 * 1000
+         });
+        res.json({user})
+    }
+    catch(err){
+        res.status(401).json({message : "Google Authentication Failed!"})
+    }
+})
 
 export default router;  

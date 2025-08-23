@@ -1,0 +1,192 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { User as UserIcon, Mail, Calendar, Save, Edit } from 'lucide-react';
+
+const User: React.FC = () => {
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+  });
+
+  const handleSave = () => {
+    // In a real app, this would update the user profile via API
+    console.log('Saving user profile:', formData);
+    setIsEditing(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1>User Profile</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Card */}
+        <div className="lg:col-span-2 bg-card border border-border rounded-lg shadow-sm">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h3>Profile Information</h3>
+              <button
+                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                className={`px-4 py-2 rounded-md transition-colors flex items-center space-x-2 ${
+                  isEditing 
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                    : 'border border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                {isEditing ? (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Profile</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Avatar Section */}
+            <div className="flex items-center space-x-4">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-lg font-medium">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <h3>{user?.name || 'User'}</h3>
+                <p className="text-muted-foreground">{user?.email}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-border"></div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="name" className="block">Full Name</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${
+                      isEditing ? 'bg-input-background' : 'bg-muted'
+                    }`}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="email" className="block">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <input
+                    id="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${
+                      isEditing ? 'bg-input-background' : 'bg-muted'
+                    }`}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Account Details */}
+            <div className="space-y-4">
+              <h4>Account Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Joined:</span>
+                  <span className="text-sm">{formatDate(user?.createdAt || '2025-01-01')}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                    Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Card */}
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          <div className="p-6 border-b border-border">
+            <h3>Your Activity</h3>
+            <p className="text-muted-foreground">Overview of your notes and activity</p>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm">Total Notes</span>
+                <span className="font-medium">24</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">This Month</span>
+                <span className="font-medium">8</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">This Week</span>
+                <span className="font-medium">3</span>
+              </div>
+            </div>
+            
+            <div className="border-t border-border"></div>
+            
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Recent Activity</h4>
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  Last login: Today at 10:30 AM
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Last note: 2 hours ago
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-card border border-destructive rounded-lg shadow-sm">
+        <div className="p-6 border-b border-destructive">
+          <h3 className="text-destructive">Danger Zone</h3>
+          <p className="text-muted-foreground">
+            These actions are permanent and cannot be undone.
+          </p>
+        </div>
+        <div className="p-6">
+          <button className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors">
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default User;

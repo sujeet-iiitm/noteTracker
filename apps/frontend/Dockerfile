@@ -1,7 +1,8 @@
-# --- deps
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
+
+RUN npm install
 COPY apps/frontend/package.json apps/frontend/
 COPY packages/typescript-config/package.json packages/typescript-config/
 RUN npm ci
