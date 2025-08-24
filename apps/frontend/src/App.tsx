@@ -1,16 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, ThemeProvider, ProtectedRoute, LoginPage, SignupPage, DashboardLayout, Home, Notes, User, Button } from '@repo/ui';
+import { AuthProvider } from '../contexts/AuthContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import ProtectedRoute from '../components/Auth/ProtectedRoute';
+import LoginPage from '../components/Auth/LoginPage';
+import SignupPage from '../components/Auth/SignupPage';
+import DashboardLayout from '../components/Layout/DashboardLayout';
+import Home from '../components/Pages/Home';
+import Notes from '../components/Pages/Notes';
+import User from '../components/Pages/User';
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="bg-red-500 text-white p-4">Tailwind Test</div>
-              <div className="p-10">
-              <div className="bg-red-500 text-white p-4">Tailwind Test</div>
-              <Button />
-              </div>
           <div className="min-h-screen bg-background text-foreground">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
