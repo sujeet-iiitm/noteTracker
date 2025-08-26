@@ -1,18 +1,58 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User as UserIcon, Mail, Calendar, Save, Edit } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+
+const deleteAccount = async() => {
+
+    try{
+      const response =  await axios.delete('http://localhost:3000/api/user/deleteAccount');
+      if(response.status === 200){
+        localStorage.removeItem('user');
+      }
+      toast.success(response.data.message);
+    }catch(error){
+      toast.error("Failed to Delete your Account, Try again..");
+    }
+  }
+
+interface UserDetails {
+  name: string;
+  email: string;
+  createdAt: string;
+  userId: string;
+}
 
 const User: React.FC = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
   });
 
-  const handleSave = () => {
-    // In a real app, this would update the user profile via API
-    console.log('Saving user profile:', formData);
+const memoizedUser: { user: UserDetails | null; userId: string } = useMemo(() => {
+const storedUser = localStorage.getItem('user');
+const user: UserDetails | null = storedUser ? JSON.parse(storedUser) : null;
+const userId : string = user?.userId || "";
+
+return { user,userId};
+},[FormData]);
+
+
+
+  const handleSave = async() => {
+    try{
+      const response = await axios.put('http://localhost:3000/api/user/editUserDetails',formData);
+      console.log('Saving user profile:', formData);
+      toast.success(response.data.message || "Updated Successfully!..")
+    }
+    catch(error){
+      toast.error('Error !.. Try Again');
+      console.log("Error wile updating, Try again!..",error)
+    }
     setIsEditing(false);
   };
 
@@ -25,6 +65,7 @@ const User: React.FC = () => {
   };
 
   return (
+    <>
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
@@ -120,7 +161,7 @@ const User: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Joined:</span>
-                  <span className="text-sm">{formatDate(user?.createdAt || '2025-01-01')}</span>
+                  <span className="text-sm">{formatDate(user?.createdAt || '')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
@@ -172,6 +213,7 @@ const User: React.FC = () => {
       </div>
 
       {/* Danger Zone */}
+      
       <div className="bg-card border border-destructive rounded-lg shadow-sm">
         <div className="p-6 border-b border-destructive">
           <h3 className="text-destructive">Danger Zone</h3>
@@ -180,13 +222,44 @@ const User: React.FC = () => {
           </p>
         </div>
         <div className="p-6">
-          <button className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors">
+          <button onClick={() => setShowConfirm(true)} className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors">
             Delete Account
           </button>
         </div>
       </div>
     </div>
+    {showConfirm && (
+  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+    <div className="bg-card p-6 rounded-lg shadow-lg border border-destructive w-full max-w-md">
+      <h2 className="text-lg font-semibold text-destructive mb-2">Confirm Account Deletion</h2>
+      <p className="text-muted-foreground mb-4">
+        Are you sure you want to delete your account? This action cannot be undone.
+      </p>
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={() => setShowConfirm(false)}
+          className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            setShowConfirm(false);
+            await deleteAccount();
+          }}
+          className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 };
+
+
+
 
 export default User;

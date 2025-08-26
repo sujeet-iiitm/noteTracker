@@ -39,8 +39,11 @@ export const userSigninMiddleware = async(req:Request, res:Response, next:NextFu
 
 
 export const userVerifyMiddleware = async(req:Request, res:Response, next:NextFunction) => {
-    const jwt_secret_key = process.env.JWT_SECRET_KEY;
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    const jwt_secret_key : any = process.env.JWT_SECRET_KEY;
+    const token : string = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    if(!token){
+        return res.status(401).json({message: "UnAuthorized"});
+    }
     try {
         const decoded = jwt.verify(token, jwt_secret_key);
         if (!decoded) {
@@ -48,7 +51,7 @@ export const userVerifyMiddleware = async(req:Request, res:Response, next:NextFu
         }
         next();
     } catch (error) {
-        return res.status(401).json({ error: 'Invalid token' });
+        return res.status(401).json({ message : 'Token Expired -or- Invalid token' });
     }
 
 };

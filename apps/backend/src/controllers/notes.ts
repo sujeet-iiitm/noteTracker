@@ -1,29 +1,33 @@
 import { Request, Response } from 'express';
 import { userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
+import dotenv from 'dotenv';
+dotenv.config();
 // import { prisma } from '@repo/db'
 // import { withAccelerate } from '@repo/db'
 // const prisma = new prisma().$extends(withAccelerate());
-import "dotenv/config"
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Router } from 'express';
 const router = Router();
 import { prisma } from '@notes/db';
 
 router.get('/allNotes' , userVerifyMiddleware, async (req:Request, res:Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
 if (!process.env.JWT_SECRET) {
 throw new Error("JWT_SECRET is not defined in environment variables");
 }
-
-const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
-
-const userId = decoded.id as string;
+try{
 const notes = await prisma.note.findMany({
     where: { userId: userId },
+    orderBy: { createdAt: 'desc' }  
 });
 if(!notes || notes.length === 0) {
-    return res.status(404).json({ error: 'No notes found for this user' });
+    return res.status(200).json({ message: 'No notes found for this user' });
 }
-return res.status(200).json(notes);
+return res.status(200).json({notes});
+}catch(error){
+    return res.status(401).send({error: "Error Occuered while fetching!..."})
+}
 });
 
 router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response) => {

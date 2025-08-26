@@ -21,7 +21,10 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     
     try {
-      await signup(email, password, name);
+      await signup(name, email, password);
+      setEmail('');
+      setName('');
+      setPassword('');
       navigate('/dashboard');
     } catch (err) {
       setError('Signup failed. Please try again.');
@@ -34,10 +37,8 @@ const SignupPage: React.FC = () => {
     try {
       await loginWithGoogle(credentialResponse);
       navigate('/dashboard');
-      toast.success("Google Signup successful!");
     } catch (err) {
       setError('Google Signup failed');
-      toast.error("Google Signup failed");
     }
   };
 

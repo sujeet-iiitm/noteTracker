@@ -1,15 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Plus, Edit, Trash2, Search, Calendar, X, FileText } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface Note {
-  id: string;
+  id : string;
   title: string;
   description: string;
   shortNote?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt : string;
+  updatedAt : string;
+  userId: string;
 }
+
+interface newNotes {
+  title: string;
+  description: string;
+  shortNote?: string;
+  userId: string;
+}
+
+const userId: string = localStorage.getItem("user") || "";
 
 const Notes: React.FC = () => {
   const { user } = useAuth();
@@ -24,28 +36,24 @@ const Notes: React.FC = () => {
     shortNote: '',
   });
 
-  // Mock data for demonstration
   useEffect(() => {
-    const mockNotes: Note[] = [
-      {
-        id: '1',
-        title: 'Daily Standup Notes',
-        description: 'Discussed project progress and upcoming milestones. Team is on track for the Q1 release.',
-        shortNote: 'Standup went well, on track',
-        createdAt: '2025-01-20T10:00:00Z',
-        updatedAt: '2025-01-20T10:00:00Z',
-      },
-      {
-        id: '2',
-        title: 'Meeting with Client',
-        description: 'Client feedback on the new design mockups. They requested changes to the color scheme and typography.',
-        shortNote: 'Client wants design changes',
-        createdAt: '2025-01-19T14:30:00Z',
-        updatedAt: '2025-01-19T14:30:00Z',
-      },
-    ];
-    setNotes(mockNotes);
-  }, []);
+  const fetchNotes = async () => {
+  try {
+    const response = await axios.post<{ notes: Note[] }>(
+      'http://localhost:3000/api/notes/allnotes',
+      {},
+      { withCredentials: true }
+    );
+
+    const notes: Note[] = response.data.notes;
+    setNotes(notes);
+  } catch (error) {
+    toast.error('Failed to fetch notes');
+    console.error(error);
+  }
+}
+fetchNotes();
+},[notes]);
 
   const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,11 +75,9 @@ const Notes: React.FC = () => {
         setEditingNote(null);
       } else {
         // Create new note
-        const newNote: Note = {
-          id: Date.now().toString(),
+        const newNote: newNotes = {
+          userId: localStorage.getItem(user?.id || "") || "",
           ...formData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         };
         setNotes([newNote, ...notes]);
         setIsAddDialogOpen(false);

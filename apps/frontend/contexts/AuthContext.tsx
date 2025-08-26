@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import { data } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -38,7 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const userData = localStorage.getItem('userDetails');
     
     if (token && userData) {
       setUser(JSON.parse(userData));
@@ -51,12 +53,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await axios.post('http://localhost:3000/api/user/signin', {
         email,
         password,
+      },{
+        withCredentials : true
       });
       
-      const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+  const { userDetails } = response.data;
+  localStorage.setItem('user', userDetails);
+  setUser(JSON.parse(userDetails));
+
     } catch (error) {
       throw new Error('Login failed');
     }
@@ -69,39 +73,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
         name,
       });
-      
-      const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      throw new Error('Signup failed');
+      toast.success(response.data.message);
+    } catch (error:any) {
+      toast.error(error.response?.data?.error || 'Something went wrong');
     }
   };
 
 const loginWithGoogle = async (credentialResponse: any) => {
   try {
-    const res = await axios.post(
+    const response = await axios.post(
       "http://localhost:3000/api/user/googleLogin",
       { credential: credentialResponse.credential },
       { withCredentials: true }
     );
 
-    const { token, user: userData } = res.data;
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  } catch (err) {
-    console.error("Google login failed:", err);
+  const { userDetails } = response.data;
+  localStorage.setItem('user', userDetails);
+  setUser(JSON.parse(userDetails));
+    toast.success("Yay!..Google Signup Succed!");
+  } catch (error:any) {
+    console.error("Google login failed:", error);
+    toast.error(error.response?.data?.message || 'Something went wrong');
     throw new Error("Google login failed");
   }
 };
 
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async() => {
+    try{
+      const response = await axios.post('http://localhost:3000/api/user/logout',{},{
+        withCredentials : true
+      });
     localStorage.removeItem('user');
     setUser(null);
+    toast.success(response.data.message || "logged out successfully!..");
+    }catch(error){
+      toast.error('Failed to logout');
+    }
   };
 
   const value = {

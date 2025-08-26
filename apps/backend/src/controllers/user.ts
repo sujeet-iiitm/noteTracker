@@ -1,10 +1,13 @@
 import { Request , Response } from 'express';
 import { userSigninMiddleware, userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
 import { OAuth2Client } from 'google-auth-library';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // import { prisma } from '@repo/db';
 // import { withAccelerate } from '@repo/db';
 // const prisma = new prisma().$extends(withAccelerate());
+
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express from 'express';
@@ -39,6 +42,7 @@ router.post('/signup', async (req:Request, res:Response) => {
                     password: hashedPassword,
                 },
             });
+            res.send({message : "user Created Successfuly!.."})
         } catch (error) {
             return res.status(500).json({ error: 'Failed to create user' });
         }
@@ -48,7 +52,7 @@ router.post('/signup', async (req:Request, res:Response) => {
 
 router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) => {
     const user = req.body;
-    const {name,email,createdAt } = user;
+    const {email,password } = user;
     const User = await prisma.user.findUnique({
         where: { email: email },
     });
@@ -64,14 +68,14 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     const token = jwt.sign({id: user.id},jwt_secret_key,
         {expiresIn : '7d'}
     )
+    const userDetails = JSON.stringify({name: user.name,createdAt: user.createdAt,email: user.email, userId: user.id, notesCount: user.note});
     res.cookie("token", token, {
      httpOnly: true,
-     secure: true,
-     sameSite: "strict",
+     secure: false,
+     sameSite: "lax",
      maxAge: 7 * 24 * 60 * 60 * 1000
      });
-    res.json({user})
-    res.status(200).json({ message: 'User signed in successfully', token });
+    return res.status(200).json({message: "user signed in successfully..",userDetails})
 });
 
 router.get('/userDetails', userVerifyMiddleware , async(req:Request , res:Response) => {
@@ -93,37 +97,72 @@ router.get('/userDetails', userVerifyMiddleware , async(req:Request , res:Respon
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const jwt_secret_key = process.env.JWT_SECRET || "";
 
-router.post('/googleLogin',async(require,res) => {
+router.post('/googleLogin',async(require:Request,res:Response) => {
     const { credential } = require.body;
     try{
         const ticket = await client.verifyIdToken({
             idToken : credential,
-            audience :process.env.GOOGLE_CLIENT_ID
+            audience : process.env.GOOGLE_CLIENT_ID
         });
         const payload = ticket.getPayload();
         if(!payload) return res.status(401).json({error:"invalid Token"});
         const { name, email } = payload;
 
-        const user = await prisma.user.findUnique({where : {email}});
-        if(!user){
-            await prisma.user.create({
-                data: {email, name}
-            })
+        let userr = await prisma.user.findUnique({ where: { email } });
+        if (!userr) {
+          await prisma.user.create({ data: { email, name } });
+          userr = await prisma.user.findUnique({ where: { email } });
         }
-        const token = jwt.sign({id: user.id},jwt_secret_key,
+        const userDetails = JSON.stringify({name: userr.name,createdAt: userr.createdAt,email: userr.email, userId: userr.id});
+        const token = jwt.sign({id: userr.id},jwt_secret_key,
             {expiresIn : '7d'}
         )
         res.cookie("token", token, {
          httpOnly: true,
-         secure: true,
-         sameSite: "strict",
+         secure: false,
+         sameSite: 'lax',
          maxAge: 7 * 24 * 60 * 60 * 1000
          });
-        res.json({user})
+        res.json({userDetails})
     }
     catch(err){
         res.status(401).json({message : "Google Authentication Failed!"})
     }
 })
 
+router.put('/editUserDetails', userVerifyMiddleware , async(req: Request, res: Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+
+});
+
+router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+    try{
+        const deleteUser = await prisma.user.delete({
+           where: {
+             id: userId,
+           },
+    })
+        res.clearCookie('token',{
+        httpOnly : true,
+        secure : false,
+        sameSite : 'lax',
+    });
+        res.status(200).send({message : "user Deleted Successfully!.."});
+    }catch(error){
+        res.status(401).send({message : "Error , Try Again!.."});
+        console.log("Error occured", error);
+    }
+});
+
+router.post('/logout', async(req: Request, res: Response) => {
+    res.clearCookie('token',{
+        httpOnly : true,
+        secure : false,
+        sameSite : 'lax',
+    });
+     return res.status(200).send({message : "logged Out Successfully"});
+})
 export default router;  

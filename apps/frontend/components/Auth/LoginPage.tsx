@@ -21,11 +21,11 @@ const LoginPage: React.FC = () => {
     
     try {
       await login(email, password);
+      setEmail("");
+      setPassword("");
       navigate('/dashboard');
-      toast.success("Signin successful!");
     } catch (err: any) {
       setError('Invalid email or password');
-      toast.error(err.response?.data?.message || "Login Failed");
     } finally {
       setLoading(false);
     }
@@ -35,10 +35,8 @@ const LoginPage: React.FC = () => {
     try {
       await loginWithGoogle(credentialResponse);
       navigate('/dashboard');
-      toast.success("Google Signin successful!");
     } catch (err) {
       setError('Google login failed');
-      toast.error("Googel Signin failed");
     }
   };
 
