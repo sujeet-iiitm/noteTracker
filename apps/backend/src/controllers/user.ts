@@ -133,7 +133,40 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
 router.put('/editUserDetails', userVerifyMiddleware , async(req: Request, res: Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
+    const { name, email } = req.body;
 
+    if (!name || !email) {
+        return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    try {
+        const existingUser = await prisma.user.findFirst({
+            where: { 
+                email: email,
+                NOT: { id: userId }
+            },
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ error: 'Email is already taken' });
+        }
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { name, email },
+        });
+        res.status(200).json({ 
+            message: 'Profile updated successfully',
+            user: {
+                name: updatedUser.name,
+                email: updatedUser.email,
+                userId: updatedUser.id,
+                createdAt: updatedUser.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
 });
 
 router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: Response) => {

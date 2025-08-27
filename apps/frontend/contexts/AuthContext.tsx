@@ -81,8 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 const loginWithGoogle = async (credentialResponse: any) => {
   try {
-    const response = await axios.post(
-      "http://localhost:3000/api/user/googleLogin",
+    const response = await axios.post("http://localhost:3000/api/user/googleLogin",
       { credential: credentialResponse.credential },
       { withCredentials: true }
     );

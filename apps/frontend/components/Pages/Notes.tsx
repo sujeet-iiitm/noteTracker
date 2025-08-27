@@ -1,35 +1,31 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Edit, Trash2, Search, Calendar, X, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Calendar, X, Loader } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 interface Note {
-  id : string;
+  id: string;
   title: string;
   description: string;
   shortNote?: string;
-  createdAt : string;
-  updatedAt : string;
+  createdAt: string;
+  updatedAt: string;
   userId: string;
 }
-
-interface newNotes {
-  title: string;
-  description: string;
-  shortNote?: string;
-  userId: string;
-}
-
-const userId: string = localStorage.getItem("user") || "";
+const darkMode : boolean = localStorage.getItem('theme') === 'dark' ? true : false;
 
 const Notes: React.FC = () => {
-  const { user } = useAuth();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deleteConfirmNote, setDeleteConfirmNote] = useState<Note | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -37,55 +33,105 @@ const Notes: React.FC = () => {
   });
 
   useEffect(() => {
+    fetchNotes();
+  }, []);
+
   const fetchNotes = async () => {
-  try {
-    const response = await axios.post<{ notes: Note[] }>(
-      'http://localhost:3000/api/notes/allnotes',
-      {},
-      { withCredentials: true }
-    );
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:3000/api/note/allNotes', {
+        withCredentials: true,
+      });
+            const notesData = response.data.notes || response.data || [];
+      setNotes(notesData);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        logout();
+        navigate('/login');
+      } else {
+        toast.error('Error fetching notes');
+        console.error('Error fetching notes:', error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const notes: Note[] = response.data.notes;
-    setNotes(notes);
-  } catch (error) {
-    toast.error('Failed to fetch notes');
-    console.error(error);
-  }
-}
-fetchNotes();
-},[notes]);
-
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!formData.title.trim() || !formData.description.trim()) {
+      toast.error('Title and description are required');
+      return;
+    }
+
+    setSubmitting(true);
     try {
       if (editingNote) {
-        // Update existing note
-        const updatedNote = {
-          ...editingNote,
-          ...formData,
-          updatedAt: new Date().toISOString(),
-        };
-        setNotes(notes.map(note => note.id === editingNote.id ? updatedNote : note));
+        const response = await axios.put(
+          'http://localhost:3000/api/note/updateNote',
+          {
+            id: editingNote.id,
+            title: formData.title,
+            description: formData.description,
+            shortNote: formData.shortNote,
+          },
+          { withCredentials: true }
+        );
+
+        setNotes(
+          notes.map((note) =>
+            note.id === editingNote.id
+              ? {
+                  ...note,
+                  title: formData.title,
+                  description: formData.description,
+                  shortNote: formData.shortNote,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note
+          )
+        );
+
+        toast.success(response.data.message || 'Note updated successfully');
         setEditingNote(null);
       } else {
-        // Create new note
-        const newNote: newNotes = {
-          userId: localStorage.getItem(user?.id || "") || "",
-          ...formData,
-        };
-        setNotes([newNote, ...notes]);
+        const response = await axios.post(
+          'http://localhost:3000/api/note/createNote',
+          {
+            title: formData.title,
+            description: formData.description,
+            shortNote: formData.shortNote,
+          },
+          { withCredentials: true }
+        );
+
+        toast.success(response.data.message || 'Note created successfully');
         setIsAddDialogOpen(false);
+        await fetchNotes();
       }
-      
+
       setFormData({ title: '', description: '', shortNote: '' });
-    } catch (error) {
-      console.error('Error saving note:', error);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        logout();
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.error || 'Invalid input');
+      } else {
+        toast.error(error.response?.data?.error || 'Error saving note. Try again.');
+        console.error('Error saving note:', error);
+      } 
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -100,10 +146,23 @@ fetchNotes();
 
   const handleDelete = async (noteId: string) => {
     try {
-      setNotes(notes.filter(note => note.id !== noteId));
+      const response = await axios.delete('http://localhost:3000/api/note/deleteNote', {
+        data: { id: noteId },
+        withCredentials: true,
+      });
+
+      setNotes(notes.filter((note) => note.id !== noteId));
+      toast.success(response.data.message || 'Note deleted successfully');
       setDeleteConfirmNote(null);
-    } catch (error) {
-      console.error('Error deleting note:', error);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        logout();
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.error || 'Error deleting note. Try again.');
+        console.error('Error deleting note:', error);
+      }
     }
   };
 
@@ -124,17 +183,25 @@ fetchNotes();
     setFormData({ title: '', description: '', shortNote: '' });
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-96">
+        <div className="flex items-center space-x-2">
+          <Loader className="w-6 h-6 animate-spin" />
+          <span>Loading notes...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1>My Notes</h1>
-          <p className="text-muted-foreground">
-            Manage and organize your daily notes
-          </p>
+          <p className="text-muted-foreground">Manage and organize your daily notes</p>
         </div>
-        
+
         <button
           onClick={() => setIsAddDialogOpen(true)}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors flex items-center space-x-2"
@@ -144,7 +211,6 @@ fetchNotes();
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <input
@@ -155,10 +221,12 @@ fetchNotes();
         />
       </div>
 
-      {/* Notes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredNotes.map((note) => (
-          <div key={note.id} className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <div
+            key={note.id}
+            className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
             <div className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -183,9 +251,7 @@ fetchNotes();
                   </button>
                 </div>
               </div>
-              <p className="text-muted-foreground line-clamp-3 mb-3">
-                {note.description}
-              </p>
+              <p className="text-muted-foreground line-clamp-3 mb-3">{note.description}</p>
               {note.shortNote && (
                 <div className="bg-muted rounded-md p-2">
                   <p className="text-sm italic">{note.shortNote}</p>
@@ -196,12 +262,14 @@ fetchNotes();
         ))}
       </div>
 
-      {filteredNotes.length === 0 && (
+      {filteredNotes.length === 0 && !loading && (
         <div className="text-center py-12">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <div className="mx-auto h-12 w-12 text-muted-foreground mb-4">📝</div>
           <h3 className="text-lg font-medium mb-2">No notes found</h3>
           <p className="text-muted-foreground mb-4">
-            {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first note.'}
+            {searchTerm
+              ? 'Try adjusting your search terms.'
+              : 'Get started by creating your first note.'}
           </p>
           {!searchTerm && (
             <button
@@ -215,7 +283,6 @@ fetchNotes();
         </div>
       )}
 
-      {/* Add/Edit Note Modal */}
       {(isAddDialogOpen || editingNote) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background border border-border rounded-lg shadow-lg w-full max-w-lg">
@@ -224,7 +291,9 @@ fetchNotes();
                 <div>
                   <h2>{editingNote ? 'Edit Note' : 'Add New Note'}</h2>
                   <p className="text-muted-foreground">
-                    {editingNote ? 'Make changes to your note here.' : 'Create a new note to track your thoughts and ideas.'}
+                    {editingNote
+                      ? 'Make changes to your note here.'
+                      : 'Create a new note to track your thoughts and ideas.'}
                   </p>
                 </div>
                 <button
@@ -238,37 +307,50 @@ fetchNotes();
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="title" className="block">Title</label>
-                  <input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="Enter note title"
-                    className="w-full px-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                    required
-                  />
+                  <label htmlFor="title" className="block">
+                    Title
+                  </label>
+            <input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Enter note title"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+              required
+            />
+
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="description" className="block">Description</label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    placeholder="Enter detailed description"
-                    rows={4}
-                    className="w-full px-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
-                    required
-                  />
+                  <label htmlFor="description" className="block">
+                    Description
+                  </label>
+            <textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Enter detailed description"
+              rows={4}
+              className={`w-full px-3 py-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+              required
+            />
+
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="shortNote" className="block">Short Note (Optional)</label>
-                  <input
-                    id="shortNote"
-                    value={formData.shortNote}
-                    onChange={(e) => setFormData({...formData, shortNote: e.target.value})}
-                    placeholder="Brief summary or key point"
-                    className="w-full px-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                  />
+                  <label htmlFor="shortNote" className="block">
+                    Short Note (Optional)
+                  </label>
+            <input
+              id="shortNote"
+              value={formData.shortNote}
+              onChange={(e) => setFormData({ ...formData, shortNote: e.target.value })}
+              placeholder="Brief summary or key point"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+            />
+
+
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -281,9 +363,17 @@ fetchNotes();
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  {editingNote ? 'Save Changes' : 'Add Note'}
+                  {submitting ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      <span>{editingNote ? 'Updating...' : 'Creating...'}</span>
+                    </>
+                  ) : (
+                    <span>{editingNote ? 'Save Changes' : 'Add Note'}</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -291,14 +381,14 @@ fetchNotes();
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteConfirmNote && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background border border-border rounded-lg shadow-lg w-full max-w-md">
             <div className="p-6">
               <h2 className="mb-2">Are you sure?</h2>
               <p className="text-muted-foreground mb-6">
-                This action cannot be undone. This will permanently delete your note.
+                This action cannot be undone!.. This will permanently delete your note "
+                {deleteConfirmNote.title}".
               </p>
               <div className="flex justify-end space-x-3">
                 <button

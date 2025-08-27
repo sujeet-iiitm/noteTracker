@@ -9,26 +9,12 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Router } from 'express';
 const router = Router();
 import { prisma } from '@notes/db';
+import { 
+  startOfWeek, endOfWeek, 
+  startOfMonth, endOfMonth, 
+  startOfYear, endOfYear 
+} from "date-fns";
 
-router.get('/allNotes' , userVerifyMiddleware, async (req:Request, res:Response) => {
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
-    const userId = decoded.id;
-if (!process.env.JWT_SECRET) {
-throw new Error("JWT_SECRET is not defined in environment variables");
-}
-try{
-const notes = await prisma.note.findMany({
-    where: { userId: userId },
-    orderBy: { createdAt: 'desc' }  
-});
-if(!notes || notes.length === 0) {
-    return res.status(200).json({ message: 'No notes found for this user' });
-}
-return res.status(200).json({notes});
-}catch(error){
-    return res.status(401).send({error: "Error Occuered while fetching!..."})
-}
-});
 
 router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
@@ -95,5 +81,80 @@ router.delete('/deleteNote', userVerifyMiddleware, async(req:Request, res:Respon
     }
 });
 
-export default router;
+router.get('/allNotes' , userVerifyMiddleware, async (req:Request, res:Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+if (!process.env.JWT_SECRET) {
+throw new Error("JWT_SECRET is not defined in environment variables");
+}
+try{
+const notes = await prisma.note.findMany({
+    where: { userId: userId },
+    orderBy: { createdAt: 'desc' }  
+});
+if(!notes || notes.length === 0) {
+    return res.status(200).json({ message: 'No notes found for this user' });
+}
+return res.status(200).json({notes});
+}catch(error){
+    return res.status(401).send({error: "Error Occuered while fetching!..."})
+}
+});
 
+router.get("/weeklyNotes", async (req: Request, res: Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+  try {
+    const now = new Date();
+    const notes = await prisma.note.findMany({
+      where: { userId :userId,
+        createdAt: {
+          gte: startOfWeek(now, { weekStartsOn: 1 }), //1 : monday
+          lte: endOfWeek(now, { weekStartsOn: 1 }),
+        },
+      },
+    });
+    res.status(200).json(notes);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch weekly notes" });
+  }
+});
+
+router.get("/monthlyNotes", async (req: Request, res: Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+  try {
+    const now = new Date();
+    const notes = await prisma.note.findMany({
+      where: { userId : userId,
+        createdAt: {
+          gte: startOfMonth(now),
+          lte: endOfMonth(now),
+        },
+      },
+    });
+    res.status(200).json(notes);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch monthly notes" });
+  }
+});
+
+router.get("/yearlyNotes", async (req: Request, res: Response) => {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+  try {
+    const now = new Date();
+    const notes = await prisma.note.findMany({
+      where: { userId : userId,
+        createdAt: {
+          gte: startOfYear(now),
+          lte: endOfYear(now),
+        },
+      },
+    });
+    res.status(200).json(notes);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch yearly notes" });
+  }
+});
+export default router;
