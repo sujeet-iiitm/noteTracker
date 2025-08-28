@@ -37,16 +37,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('userDetails');
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/user/me",
+        { withCredentials: true } 
+      );
+      setUser(res.data);
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  };
+  checkAuth();
+}, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -57,12 +62,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         withCredentials : true
       });
       
-  const { userDetails } = response.data;
-  localStorage.setItem('user', userDetails);
-  setUser(JSON.parse(userDetails));
-
-    } catch (error) {
-      throw new Error('Login failed');
+    const { userDetails } = response.data;
+    setUser(JSON.parse(userDetails));
+    localStorage.setItem('user', userDetails);
+    toast.success("Yay!..Google Signup Succed!");
+    } catch (error: any) {
+    console.error("login failed:", error);
+    toast.error(error.response?.data?.message || 'Something went wrong');
+    throw new Error('Login failed');
     }
   };
 
@@ -85,10 +92,9 @@ const loginWithGoogle = async (credentialResponse: any) => {
       { credential: credentialResponse.credential },
       { withCredentials: true }
     );
-
-  const { userDetails } = response.data;
-  localStorage.setItem('user', userDetails);
-  setUser(JSON.parse(userDetails));
+    const { userDetails } = response.data;
+    setUser(JSON.parse(userDetails));
+    localStorage.setItem('user', userDetails);
     toast.success("Yay!..Google Signup Succed!");
   } catch (error:any) {
     console.error("Google login failed:", error);

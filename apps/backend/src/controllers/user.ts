@@ -65,14 +65,20 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     throw new Error("JWT_SECRET is not defined in environment variables");
     }
 
-    const token = jwt.sign({id: user.id},jwt_secret_key,
+    const token = jwt.sign({id: User.id},jwt_secret_key,    
         {expiresIn : '7d'}
     )
-    const userDetails = JSON.stringify({name: user.name,createdAt: user.createdAt,email: user.email, userId: user.id, notesCount: user.note});
+    const userDetails = JSON.stringify({
+        name:   User.name,
+        createdAt: User.createdAt,
+        email: User.email,
+        userId: User.id,
+        notesCount: await prisma.note.count({where: {userId : User.id} })
+    });
     res.cookie("token", token, {
      httpOnly: true,
-     secure: false,
-     sameSite: "lax",
+     secure: true,
+     sameSite: 'none',
      maxAge: 7 * 24 * 60 * 60 * 1000
      });
     return res.status(200).json({message: "user signed in successfully..",userDetails})
@@ -113,14 +119,22 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
           await prisma.user.create({ data: { email, name } });
           userr = await prisma.user.findUnique({ where: { email } });
         }
-        const userDetails = JSON.stringify({name: userr.name,createdAt: userr.createdAt,email: userr.email, userId: userr.id});
+        const userDetails = JSON.stringify({
+            name: userr.name,
+            createdAt: userr.createdAt,
+            email: userr.email,
+            userId: userr.id,
+            notesCount: await prisma.note.count({where: {userId : userr.id} })
+
+        });
+
         const token = jwt.sign({id: userr.id},jwt_secret_key,
             {expiresIn : '7d'}
         )
         res.cookie("token", token, {
          httpOnly: true,
-         secure: false,
-         sameSite: 'lax',
+         secure: true,
+         sameSite: 'none',
          maxAge: 7 * 24 * 60 * 60 * 1000
          });
         res.json({userDetails})
@@ -180,8 +194,8 @@ router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: 
     })
         res.clearCookie('token',{
         httpOnly : true,
-        secure : false,
-        sameSite : 'lax',
+        secure : true,
+        sameSite : 'none',
     });
         res.status(200).send({message : "user Deleted Successfully!.."});
     }catch(error){
@@ -190,11 +204,30 @@ router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: 
     }
 });
 
+router.get("/me", async (req: Request, res: Response) => {
+  try {
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as { id: string };
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+
+    if (!user) return res.status(401).json({ error: "User not found" });
+
+    res.status(200).json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    });
+  } catch (err) {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+});
+
+
 router.post('/logout', async(req: Request, res: Response) => {
     res.clearCookie('token',{
         httpOnly : true,
-        secure : false,
-        sameSite : 'lax',
+        secure : true,
+        sameSite : 'none',
     });
      return res.status(200).send({message : "logged Out Successfully"});
 })
