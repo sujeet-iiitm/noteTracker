@@ -8,6 +8,8 @@ import DashboardLayout from '../components/Layout/DashboardLayout';
 import Home from '../components/Pages/Home';
 import Notes from '../components/Pages/Notes';
 import User from '../components/Pages/User';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function App() {
   return (
@@ -36,6 +38,18 @@ export default function App() {
           </div>
         </Router>
       </AuthProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </ThemeProvider>
   );
 }

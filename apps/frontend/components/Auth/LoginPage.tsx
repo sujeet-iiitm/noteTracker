@@ -4,6 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock } from 'lucide-react';
 import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'
+const darkMode : boolean = localStorage.getItem('theme') === 'dark' ? true : false;
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -56,11 +58,15 @@ const LoginPage: React.FC = () => {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   placeholder="Enter your email"
-                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className={`w-full pl-10 pr-3 py-2 
+                    ${darkMode 
+                      ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                      : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`
+                  }
                   required
                 />
               </div>
@@ -74,9 +80,13 @@ const LoginPage: React.FC = () => {
                   id="password"
                   type="password"
                   placeholder="Enter your password"
-                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className={`w-full pl-10 pr-3 py-2 
+                    ${darkMode 
+                      ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                      : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`
+                  }
                   required
                 />
               </div>
@@ -111,7 +121,7 @@ const LoginPage: React.FC = () => {
             onError={() => {
               toast.error("Google Signin failed");
             }}
-            useOneTap // optional: enables One Tap login prompt
+            useOneTap
           />
           
           <div className="text-center text-sm">

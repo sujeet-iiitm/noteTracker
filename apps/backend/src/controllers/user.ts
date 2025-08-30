@@ -17,7 +17,7 @@ import { prisma } from '@notes/db';
 
 router.post('/signup', async (req:Request, res:Response) => {
     const user = req.body;
-    const { email,name,password } = user;
+    const { name,email,password } = user;
     if (!email || !name || !password) {
         return res.status(400).json({ error: 'Email, name, and password are required' });
     }
@@ -30,24 +30,20 @@ router.post('/signup', async (req:Request, res:Response) => {
     }
 
     const saltRounds: number = parseInt(process.env.bcrypt_salt_rounds || "10");
-    bcrypt.hash(password, saltRounds, async(err:any, hashedPassword:string) => {
-        if (err) {
-            return res.status(500).json({ error: 'Internal server error' });
-        }
+    const hashedPassword = await bcrypt.hash(password,saltRounds);
         try {
-            const user = await prisma.user.create({
+            await prisma.user.create({
                 data: {
                     email: email,
                     name: name,
                     password: hashedPassword,
                 },
             });
-            res.send({message : "user Created Successfuly!.."})
+            res.send({message : "user Created Successfully!.."})
         } catch (error) {
             return res.status(500).json({ error: 'Failed to create user' });
         }
     });
-});
 
 
 router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) => {
@@ -56,6 +52,8 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     const User = await prisma.user.findUnique({
         where: { email: email },
     });
+    console.log("hello");
+    console.log(User);
 
     if (!User) {
         return res.status(401).json({ error: 'Invalid email or password' });
@@ -231,4 +229,4 @@ router.post('/logout', async(req: Request, res: Response) => {
     });
      return res.status(200).send({message : "logged Out Successfully"});
 })
-export default router;  
+export default router;

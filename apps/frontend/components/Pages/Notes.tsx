@@ -32,21 +32,18 @@ const Notes: React.FC = () => {
     shortNote: '',
   });
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-
   const fetchNotes = async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:3000/api/note/allNotes', {
         withCredentials: true,
       });
-            const notesData = response.data.notes || response.data || [];
+        const notesData = response.data.notes || response.data || [];
       setNotes(notesData);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
       } else {
@@ -57,6 +54,11 @@ const Notes: React.FC = () => {
       setLoading(false);
     }
   };
+
+    useEffect(() => {
+    fetchNotes();
+  }, []);
+
 
   const filteredNotes = notes.filter(
     (note) =>
@@ -121,7 +123,8 @@ const Notes: React.FC = () => {
       setFormData({ title: '', description: '', shortNote: '' });
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
       } else if (error.response?.status === 400) {
@@ -156,7 +159,8 @@ const Notes: React.FC = () => {
       setDeleteConfirmNote(null);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
       } else {
@@ -187,7 +191,7 @@ const Notes: React.FC = () => {
     return (
       <div className="p-6 flex items-center justify-center min-h-96">
         <div className="flex items-center space-x-2">
-          <Loader className="w-6 h-6 animate-spin" />
+          <Loader className="w-6 h-6 animate-spin"></Loader><br/>
           <span>Loading notes...</span>
         </div>
       </div>
@@ -217,7 +221,11 @@ const Notes: React.FC = () => {
           placeholder="Search notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          className={`w-full pl-10 pr-3 py-2 
+            ${darkMode 
+              ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+              : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+            border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`}
         />
       </div>
 
@@ -316,7 +324,10 @@ const Notes: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Enter note title"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+                ${darkMode 
+                  ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                  : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+              `}
               required
             />
 
@@ -331,8 +342,11 @@ const Notes: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter detailed description"
               rows={4}
-              className={`w-full px-3 py-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                ${darkMode 
+                  ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                  : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+              `}
               required
             />
 
@@ -347,7 +361,11 @@ const Notes: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, shortNote: e.target.value })}
               placeholder="Brief summary or key point"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-                ${darkMode ? 'bg-input-background text-black border-border placeholder-gray-500' : 'bg-gray-800 text-white border-gray-600 placeholder-gray-400'}`}
+                ${darkMode 
+                  ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                  : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+              `}
+              required
             />
 
 

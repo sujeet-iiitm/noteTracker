@@ -13,7 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name?: string) => Promise<void>;
+  signup: (name: string, email: string, password?: string) => Promise<void>;
   loginWithGoogle: (credentialResponse: any) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -65,7 +65,7 @@ useEffect(() => {
     const { userDetails } = response.data;
     setUser(JSON.parse(userDetails));
     localStorage.setItem('user', userDetails);
-    toast.success("Yay!..Google Signup Succed!");
+    toast.success("Signed in Successfully!..");
     } catch (error: any) {
     console.error("login failed:", error);
     toast.error(error.response?.data?.message || 'Something went wrong');
@@ -73,12 +73,12 @@ useEffect(() => {
     }
   };
 
-  const signup = async (email: string, password: string, name?: string) => {
+  const signup = async (name: string, email: string, password?: string) => {
     try {
       const response = await axios.post('http://localhost:3000/api/user/signup', {
+        name,
         email,
         password,
-        name,
       });
       toast.success(response.data.message);
     } catch (error:any) {
@@ -95,7 +95,7 @@ const loginWithGoogle = async (credentialResponse: any) => {
     const { userDetails } = response.data;
     setUser(JSON.parse(userDetails));
     localStorage.setItem('user', userDetails);
-    toast.success("Yay!..Google Signup Succed!");
+    toast.success("Yay!..Google Signup Succeed!");
   } catch (error:any) {
     console.error("Google login failed:", error);
     toast.error(error.response?.data?.message || 'Something went wrong');

@@ -50,38 +50,47 @@ const User: React.FC = () => {
   const storedUser = localStorage.getItem('user');
   const userDetails: UserDetails | null = storedUser ? JSON.parse(storedUser) : null;
 
+const fetchNotes = async () => {
+  try {
+    const [allRes, weekRes, monthRes, yearRes] = await Promise.all([
+      axios.get("http://localhost:3000/api/note/allNotes", {
+        withCredentials: true,
+      }),
+      axios.get("http://localhost:3000/api/note/weeklyNotes", {
+        withCredentials: true,
+      }),
+      axios.get("http://localhost:3000/api/note/monthlyNotes", {
+        withCredentials: true,
+      }),
+      axios.get("http://localhost:3000/api/note/yearlyNotes", {
+        withCredentials: true,
+      }),
+    ]);
+
+    setNotes({
+      allNotes: allRes.data.notes || allRes.data || [],
+      weeklyNotes: weekRes.data || [],
+      monthlyNotes: monthRes.data || [],
+      yearlyNotes: yearRes.data || [],
+    });
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..');
+        logout();
+        navigate('/login');
+    } else {
+      toast.error("Error fetching notes");
+      console.log("Error fetching notes:", error);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
   useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const [allRes, weekRes, monthRes, yearRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/note/allNotes', { withCredentials: true }),
-          axios.get('http://localhost:3000/api/note/weeklyNotes', { withCredentials: true }),
-          axios.get('http://localhost:3000/api/note/monthlyNotes', { withCredentials: true }),
-          axios.get('http://localhost:3000/api/note/yearlyNotes', { withCredentials: true }),
-        ]);
-
-        setNotes({
-          allNotes: allRes.data.notes || allRes.data || [],
-          weeklyNotes: weekRes.data || [],
-          monthlyNotes: monthRes.data || [],
-          yearlyNotes: yearRes.data || [],
-        });
-      } catch (error: any) {
-        if (error.response?.status === 401) {
-          toast.error('Session expired. Please login again.');
-          logout();
-          navigate('/login');
-        } else {
-          toast.error('Error fetching notes');
-          console.log('Error fetching notes:', error);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchNotes();
-  }, [logout, navigate]);
+  }, []);
 
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.email.trim()) {
@@ -97,17 +106,17 @@ const User: React.FC = () => {
         { withCredentials: true }
       );
       
-      // Update localStorage with new user data
       if (userDetails) {
         const updatedUser = { ...userDetails, ...formData };
+        localStorage.removeItem('user');
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
-      
       toast.success(response.data.message || 'Profile updated successfully!');
       setIsEditing(false);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
       } else {
@@ -134,7 +143,8 @@ const User: React.FC = () => {
       toast.success(response.data.message || 'Account deleted successfully');
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
       } else {

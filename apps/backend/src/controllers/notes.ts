@@ -33,7 +33,7 @@ router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response
                 userId: userId,
             },
         });
-        res.status(200).json({message: 'User created successfully'});
+        res.status(200).json({message: 'Note created successfully'});
     }
     catch(error){
         res.status(500).json({ error: 'Failed to create note' });
@@ -101,7 +101,7 @@ return res.status(200).json({notes});
 }
 });
 
-router.get("/weeklyNotes", async (req: Request, res: Response) => {
+router.get("/weeklyNotes", userVerifyMiddleware ,async(req: Request, res: Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
   try {
@@ -120,7 +120,7 @@ router.get("/weeklyNotes", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/monthlyNotes", async (req: Request, res: Response) => {
+router.get("/monthlyNotes", userVerifyMiddleware ,async(req: Request, res: Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
   try {
@@ -139,7 +139,7 @@ router.get("/monthlyNotes", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/yearlyNotes", async (req: Request, res: Response) => {
+router.get("/yearlyNotes", userVerifyMiddleware, async(req: Request, res: Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
     const userId = decoded.id;
   try {

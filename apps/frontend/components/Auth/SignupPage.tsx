@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock, User } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'
+const darkMode : boolean = localStorage.getItem('theme') === 'dark' ? true : false;
 
 const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -59,10 +61,15 @@ const SignupPage: React.FC = () => {
                   id="name"
                   type="text"
                   placeholder="Enter your name"
-                  value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
+                  className={`w-full pl-10 pr-3 py-2 
+                    ${darkMode 
+                      ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                      : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`
+                  }
+                  required
+                  />
               </div>
             </div>
             
@@ -74,25 +81,33 @@ const SignupPage: React.FC = () => {
                   id="email"
                   type="email"
                   placeholder="Enter your email"
-                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className={`w-full pl-10 pr-3 py-2 
+                    ${darkMode 
+                      ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                      : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`
+                  }
                   required
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="password" className="block">Password</label>
+              <label htmlFor="password" className="block">Password</label>  
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   id="password"
                   type="password"
                   placeholder="Create a password"
-                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  className={`w-full pl-10 pr-3 py-2 
+                    ${darkMode 
+                      ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                      : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`
+                  }
                   required
                 />
               </div>
