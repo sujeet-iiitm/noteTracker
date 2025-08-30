@@ -52,8 +52,6 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     const User = await prisma.user.findUnique({
         where: { email: email },
     });
-    console.log("hello");
-    console.log(User);
 
     if (!User) {
         return res.status(401).json({ error: 'Invalid email or password' });
@@ -75,7 +73,7 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     });
     res.cookie("token", token, {
      httpOnly: true,
-     secure: true,
+     secure: process.env.NODE_ENV === "production",
      sameSite: 'none',
      maxAge: 7 * 24 * 60 * 60 * 1000
      });
@@ -131,7 +129,7 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
         )
         res.cookie("token", token, {
          httpOnly: true,
-         secure: true,
+         secure: process.env.NODE_ENV === "production",
          sameSite: 'none',
          maxAge: 7 * 24 * 60 * 60 * 1000
          });
@@ -192,7 +190,7 @@ router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: 
     })
         res.clearCookie('token',{
         httpOnly : true,
-        secure : true,
+        secure: process.env.NODE_ENV === "production",
         sameSite : 'none',
     });
         res.status(200).send({message : "user Deleted Successfully!.."});
@@ -224,8 +222,9 @@ router.get("/me", async (req: Request, res: Response) => {
 router.post('/logout', async(req: Request, res: Response) => {
     res.clearCookie('token',{
         httpOnly : true,
-        secure : true,
+        secure: process.env.NODE_ENV === "production",
         sameSite : 'none',
+        path : '/'
     });
      return res.status(200).send({message : "logged Out Successfully"});
 })

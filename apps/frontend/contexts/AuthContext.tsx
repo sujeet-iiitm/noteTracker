@@ -54,6 +54,9 @@ useEffect(() => {
 }, []);
 
   const login = async (email: string, password: string) => {
+  const now = new Date();
+  const formattedTime = now.toLocaleTimeString("en-GB", { hour12: false });
+
     try {
       const response = await axios.post('http://localhost:3000/api/user/signin', {
         email,
@@ -65,6 +68,7 @@ useEffect(() => {
     const { userDetails } = response.data;
     setUser(JSON.parse(userDetails));
     localStorage.setItem('user', userDetails);
+    localStorage.setItem("lastLogin", formattedTime);
     toast.success("Signed in Successfully!..");
     } catch (error: any) {
     console.error("login failed:", error);
@@ -87,6 +91,8 @@ useEffect(() => {
   };
 
 const loginWithGoogle = async (credentialResponse: any) => {
+  const now = new Date();
+  const formattedTime = now.toLocaleTimeString("en-GB", { hour12: false });
   try {
     const response = await axios.post("http://localhost:3000/api/user/googleLogin",
       { credential: credentialResponse.credential },
@@ -95,6 +101,7 @@ const loginWithGoogle = async (credentialResponse: any) => {
     const { userDetails } = response.data;
     setUser(JSON.parse(userDetails));
     localStorage.setItem('user', userDetails);
+    localStorage.setItem("lastLogin", formattedTime);
     toast.success("Yay!..Google Signup Succeed!");
   } catch (error:any) {
     console.error("Google login failed:", error);

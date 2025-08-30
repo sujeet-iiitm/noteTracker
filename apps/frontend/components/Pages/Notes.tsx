@@ -365,7 +365,6 @@ const Notes: React.FC = () => {
                   ? 'bg-black text-white border-gray-600 placeholder-gray-400'
                   : 'bg-white text-black border-gray-300 placeholder-gray-500'}
               `}
-              required
             />
 
 

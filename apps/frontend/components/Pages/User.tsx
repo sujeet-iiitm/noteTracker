@@ -4,6 +4,8 @@ import { User as UserIcon, Mail, Calendar, Save, Edit, Loader } from 'lucide-rea
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+  
+const lastLogin: string | null = localStorage.getItem("lastLogin");
 
 interface UserDetails {
   name: string;
@@ -320,7 +322,7 @@ const fetchNotes = async () => {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Recent Activity</h4>
                 <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">Last login: Today at 10:30 AM</div>
+                  <div className="text-xs text-muted-foreground">Last login: {lastLogin}</div>
                   <div className="text-xs text-muted-foreground">
                     Last note: {notes.allNotes.length > 0 ? 'Recently' : 'No notes yet'}
                   </div>
