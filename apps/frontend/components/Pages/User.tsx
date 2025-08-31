@@ -4,7 +4,8 @@ import { User as UserIcon, Mail, Calendar, Save, Edit, Loader } from 'lucide-rea
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-  
+import { useNotes } from '../Hooks/useNotes';
+
 const lastLogin: string | null = localStorage.getItem("lastLogin");
 
 interface UserDetails {
@@ -14,81 +15,20 @@ interface UserDetails {
   userId: string;
 }
 
-interface NotesDetails {
-  id: string;
-  title: string;
-  description: string;
-  shortNote: string;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-}
-
-interface NotesGroup {
-  allNotes: NotesDetails[];
-  weeklyNotes: NotesDetails[];
-  monthlyNotes: NotesDetails[];
-  yearlyNotes: NotesDetails[];
-}
-
 const User: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const { notes, loading, fetchNotes } = useNotes();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
   });
-  const [notes, setNotes] = useState<NotesGroup>({
-    allNotes: [],
-    weeklyNotes: [],
-    monthlyNotes: [],
-    yearlyNotes: [],
-  });
 
   const storedUser = localStorage.getItem('user');
   const userDetails: UserDetails | null = storedUser ? JSON.parse(storedUser) : null;
-
-const fetchNotes = async () => {
-  try {
-    const [allRes, weekRes, monthRes, yearRes] = await Promise.all([
-      axios.get("http://localhost:3000/api/note/allNotes", {
-        withCredentials: true,
-      }),
-      axios.get("http://localhost:3000/api/note/weeklyNotes", {
-        withCredentials: true,
-      }),
-      axios.get("http://localhost:3000/api/note/monthlyNotes", {
-        withCredentials: true,
-      }),
-      axios.get("http://localhost:3000/api/note/yearlyNotes", {
-        withCredentials: true,
-      }),
-    ]);
-
-    setNotes({
-      allNotes: allRes.data.notes || allRes.data || [],
-      weeklyNotes: weekRes.data || [],
-      monthlyNotes: monthRes.data || [],
-      yearlyNotes: yearRes.data || [],
-    });
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
-        toast.caller('please Signin Again!..');
-        logout();
-        navigate('/login');
-    } else {
-      toast.error("Error fetching notes");
-      console.log("Error fetching notes:", error);
-    }
-  } finally {
-    setLoading(false);
-  }
-};
 
   useEffect(() => {
     fetchNotes();

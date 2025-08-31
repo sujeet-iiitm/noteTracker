@@ -100,6 +100,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const jwt_secret_key = process.env.JWT_SECRET || "";
 
 router.post('/googleLogin',async(require:Request,res:Response) => {
+    console.log(JSON.stringify(process.env.NODE_ENV) == "production" ? true : false);
     const { credential } = require.body;
     try{
         const ticket = await client.verifyIdToken({
@@ -129,7 +130,7 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
         )
         res.cookie("token", token, {
          httpOnly: true,
-         secure: process.env.NODE_ENV === "production",
+         secure: JSON.stringify(process.env.NODE_ENV) == "production" ? true : false,
          sameSite: 'none',
          maxAge: 7 * 24 * 60 * 60 * 1000
          });
