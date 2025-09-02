@@ -73,9 +73,10 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     });
     res.cookie("token", token, {
      httpOnly: true,
-     secure: process.env.NODE_ENV === "production",
-     sameSite: 'none',
-     maxAge: 7 * 24 * 60 * 60 * 1000
+     secure: false,
+     sameSite: 'lax',
+     maxAge: 7 * 24 * 60 * 60 * 1000,
+     path : '/'
      });
     return res.status(200).json({message: "user signed in successfully..",userDetails})
 });
@@ -100,7 +101,6 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const jwt_secret_key = process.env.JWT_SECRET || "";
 
 router.post('/googleLogin',async(require:Request,res:Response) => {
-    console.log(JSON.stringify(process.env.NODE_ENV) == "production" ? true : false);
     const { credential } = require.body;
     try{
         const ticket = await client.verifyIdToken({
@@ -130,9 +130,10 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
         )
         res.cookie("token", token, {
          httpOnly: true,
-         secure: JSON.stringify(process.env.NODE_ENV) == "production" ? true : false,
-         sameSite: 'none',
-         maxAge: 7 * 24 * 60 * 60 * 1000
+         secure: false,
+         sameSite: 'lax',
+         maxAge: 7 * 24 * 60 * 60 * 1000,
+         path : '/'
          });
         res.json({userDetails})
     }
@@ -191,8 +192,8 @@ router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: 
     })
         res.clearCookie('token',{
         httpOnly : true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite : 'none',
+        secure: false,
+        sameSite : 'lax',
     });
         res.status(200).send({message : "user Deleted Successfully!.."});
     }catch(error){
@@ -223,8 +224,8 @@ router.get("/me", async (req: Request, res: Response) => {
 router.post('/logout', async(req: Request, res: Response) => {
     res.clearCookie('token',{
         httpOnly : true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite : 'none',
+        secure: false,
+        sameSite : 'lax',
         path : '/'
     });
      return res.status(200).send({message : "logged Out Successfully"});

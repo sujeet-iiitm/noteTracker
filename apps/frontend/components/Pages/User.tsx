@@ -57,7 +57,7 @@ const User: React.FC = () => {
       setIsEditing(false);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.error(<>UnAuthenticated Request Spotted!..<br/>  for Your Safety!<br/>  Logging-Out</>);
         toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
@@ -85,7 +85,7 @@ const User: React.FC = () => {
       toast.success(response.data.message || 'Account deleted successfully');
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.error(<>UnAuthenticated Request Spotted!..<br/>  for Your Safety!<br/>  Logging-Out</>);
         toast.caller('please Signin Again!..')
         logout();
         navigate('/login');

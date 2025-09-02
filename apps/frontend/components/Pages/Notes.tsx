@@ -42,7 +42,7 @@ const Notes: React.FC = () => {
       setNotes(notesData);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.error(<>UnAuthenticated Request Spotted!..<br/>  for Your Safety!<br/>  Logging-Out</>);
         toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
@@ -123,7 +123,7 @@ const Notes: React.FC = () => {
       setFormData({ title: '', description: '', shortNote: '' });
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.error(<>UnAuthenticated Request Spotted!..<br/>  for Your Safety!<br/>  Logging-Out</>);
         toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
@@ -159,7 +159,7 @@ const Notes: React.FC = () => {
       setDeleteConfirmNote(null);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..\nfor Your Safety!\n Logging-Out</>);
+        toast.error(<>UnAuthenticated Request Spotted!..<br/>  for Your Safety!<br/>  Logging-Out</>);
         toast.caller('please Signin Again!..')
         logout();
         navigate('/login');
