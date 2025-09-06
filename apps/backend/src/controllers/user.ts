@@ -1,6 +1,7 @@
 import { Request , Response } from 'express';
 import { userSigninMiddleware, userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
 import { OAuth2Client } from 'google-auth-library';
+import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -220,6 +221,19 @@ router.get("/me", async (req: Request, res: Response) => {
   }
 });
 
+router.post('/buyMeACoffee', userVerifyMiddleware , async (req : Request , res : Response) => {
+    const options = req.body;
+try{
+const razorpay = new Razorpay({
+    key_id : process.env.key_razor_id,
+    key_secret : process.env.key_razor_secret
+});
+const order = await razorpay.orders.create(options);
+res.send({message : "okk",order : order})
+}catch(error){
+    res.send({message: error});
+}
+})
 
 router.post('/logout', async(req: Request, res: Response) => {
     res.clearCookie('token',{

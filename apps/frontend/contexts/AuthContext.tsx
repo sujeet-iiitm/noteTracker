@@ -18,7 +18,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
 }
-
+  
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -58,6 +58,7 @@ useEffect(() => {
   const formattedTime = now.toLocaleTimeString("en-GB", { hour12: false });
 
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:3000/api/user/signin', {
         email,
         password,
@@ -94,6 +95,7 @@ const loginWithGoogle = async (credentialResponse: any) => {
   const now = new Date();
   const formattedTime = now.toLocaleTimeString("en-GB", { hour12: false });
   try {
+    setLoading(true);
     const response = await axios.post("http://localhost:3000/api/user/googleLogin",
       { credential: credentialResponse.credential },
       { withCredentials: true }

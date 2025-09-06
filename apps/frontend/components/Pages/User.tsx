@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useNotes } from '../Hooks/useNotes';
 
 const lastLogin: string | null = localStorage.getItem("lastLogin");
+const darkMode : boolean = localStorage.getItem('theme') === 'dark' ? true : false;
+
 
 interface UserDetails {
   name: string;
@@ -166,7 +168,6 @@ const User: React.FC = () => {
               </div>
 
               <div className="border-t border-border"></div>
-
               {/* Form Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -179,9 +180,10 @@ const User: React.FC = () => {
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${
-                        isEditing ? 'bg-input-background' : 'bg-muted'
-                      }`}
+                      className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                  ${darkMode 
+                  ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                  : 'bg-white text-black border-gray-300 placeholder-gray-500'}`}
                       disabled={!isEditing}
                     />
                   </div>
@@ -197,9 +199,11 @@ const User: React.FC = () => {
                       id="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${
-                        isEditing ? 'bg-input-background' : 'bg-muted'
-                      }`}
+                      className={`w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                    ${darkMode 
+                  ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                  : 'bg-white text-black border-gray-300 placeholder-gray-500'}}
+                      `}
                       disabled={!isEditing}
                     />
                   </div>
@@ -235,6 +239,8 @@ const User: React.FC = () => {
               {loading ? (
                 <div className="flex justify-center items-center py-8">
                   <Loader className="w-6 h-6 animate-spin" />
+                  <br/>
+                  <span >Loading Your Activity...</span>
                 </div>
               ) : (
                 <div className="space-y-2">

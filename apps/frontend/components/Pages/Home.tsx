@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Plus, Notebook, Calendar } from 'lucide-react';
+import { FileText, Plus, Notebook, Calendar, Loader } from 'lucide-react';
 import { useNotes } from '../Hooks/useNotes';
 
 const Home: React.FC = () => {
@@ -74,7 +74,7 @@ const Home: React.FC = () => {
         </p>
       </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 space-y-3 md:grid-cols-3 gap-3">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -106,8 +106,10 @@ const Home: React.FC = () => {
         </div>
         <div className="p-6 pt-0">
           {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <span className="animate-spin">Loading...</span>
+            <div className='flex items-center justify-center'>
+            <Loader className="w-6 h-6 animate-spin" />
+            <br/>
+            <span >Loading Your Recent Activities...</span>
             </div>
           ) : recentNotes.length === 0 ? (
             <div className="text-muted-foreground">No recent notes found.</div>

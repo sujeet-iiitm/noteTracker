@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
+import axios from 'axios';
 const darkMode : boolean = localStorage.getItem('theme') === 'dark' ? true : false;
 
 const LoginPage: React.FC = () => {
@@ -15,6 +16,25 @@ const LoginPage: React.FC = () => {
   
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const fetchUser = async() => {
+    try{
+    const response = await axios.get('http://localhost:3000/api/user/me',
+      {withCredentials : true});
+    if(JSON.stringify(response.status) === "200"){
+        navigate('/dashboard'); 
+    }
+    else{
+    navigate('/login')
+    }
+    }catch(error){
+    navigate('/login')
+    }
+    }
+  
+  useEffect(() => {
+  fetchUser();
+  },[])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
