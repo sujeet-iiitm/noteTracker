@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Coffee, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 declare global {
   interface Window {
@@ -9,15 +10,30 @@ declare global {
 
 interface DonationFormData {
   amount: string;
+  phone: string;
   name: string;
   message: string;
 }
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface OrderResponse {
+  id: string;
+  amount: number;
+  currency: string;
+}
+
 
 const Footer: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<DonationFormData>({
     amount: '',
     name: '',
+    phone: '',
     message: ''
   });
   const formRef = useRef<HTMLDivElement>(null);
@@ -52,59 +68,49 @@ useEffect(() => {
     }));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.amount || !formData.name) {
-      alert('Please fill in amount and name fields');
-      return;
-    }
+const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    const amountInPaise = parseInt(formData.amount) * 100; // in paise!
+  const amountInRupees = parseInt(formData.amount, 10);
 
-    const options = {
-      key: import.meta.env.VITE_key_id_razor,
-      amount: amountInPaise,
-      currency: 'INR',
-      name: 'Daily Notes Tracker',
-      description: formData.message || 'Buy me a coffee ☕',
-      handler: function (response: any) {
-        // Handle successful payment
-        console.log('Payment successful:', response);
-        alert(`Thank you ${formData.name} for buying me a coffee! ☕`);
-        setShowForm(false);
-        setFormData({ amount: '100', name: '', message: '' });
-        // You can send the payment details to your backend here
-        fetch('http://localhost:3000/api/user/buyMeACoffee', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-            donor_name: formData.name,
-            message: formData.message,
-            amount: formData.amount
-          })
-        });
-      },
-      prefill: {
-        name: formData.name,
-        email: 'abcde@gmail.com',
-        contact: '99999-99999'
-      },
-      notes: {
-        address: formData.message || 'Thank you for supporting Daily Notes Tracker!',
-        donor_name: formData.name
-      },
-      theme: {
-        color: '#f59e0b'
-      },
-      modal: {
-        ondismiss: function() {
-          console.log('Payment cancelled');
-        }
+  const res = await fetch("http://localhost:3000/api/user/buyMeACoffee", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials : 'include',
+    body: JSON.stringify({
+      amount: amountInRupees,
+      currency: "INR",
+      receipt: `donation_${Date.now()}`
+    }),
+  });
+
+  const order: OrderResponse = await res.json();
+
+  const options: any = {
+    key: import.meta.env.VITE_key_id_razor as string,
+    amount: order.amount, // amount in paise
+    currency: order.currency,
+    name: "Daily Notes Tracker",
+    description: formData.message || "Buy me a coffee ☕",
+    order_id: order.id,
+    handler: function (response: RazorpayResponse) {
+      toast.success(`Thank you ${formData.name} for buying me a coffee! ☕ 😊`);
+    },
+    prefill: {
+      name: formData.name,
+      contact: formData.phone,
+      email: "abcde@gmail.com",
+    },
+    notes: {
+      address: formData.message || "Thank you for supporting Daily Notes Tracker!",
+      donor_name: formData.name,
+    },
+    theme: { color: "#f59e0b" },
+    modal: {
+      ondismiss: function() {
+        console.log('Payment cancelled');
       }
+    }
     };
 
     if (typeof window.Razorpay !== 'undefined') {
@@ -188,6 +194,25 @@ useEffect(() => {
                     placeholder="Enter amount"
                   />
                 </div>
+                <div>
+                  <label htmlFor="name" className="block text-sm text-foreground mb-1">
+                    phone no.
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    required
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                      ${darkMode 
+                        ? 'bg-black text-white border-gray-600 placeholder-gray-400'
+                        : 'bg-white text-black border-gray-300 placeholder-gray-500'}
+                    `}
+                    placeholder="Enter your name"
+                  />
+                </div>
 
                 <div>
                   <label htmlFor="name" className="block text-sm text-foreground mb-1">
@@ -231,6 +256,7 @@ useEffect(() => {
                 <button
                   type="submit"
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-2 px-4 rounded-md transition-all duration-200 font-medium"
+                  onClick={() => handleFormSubmit}
                 >
                   Proceed to Payment
                 </button>

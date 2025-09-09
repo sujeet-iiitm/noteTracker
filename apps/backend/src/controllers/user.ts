@@ -222,14 +222,20 @@ router.get("/me", async (req: Request, res: Response) => {
 });
 
 router.post('/buyMeACoffee', userVerifyMiddleware , async (req : Request , res : Response) => {
-    const options = req.body;
+    const { amount, currency = "INR", receipt = `receipt_${Date.now()}` } = req.body;
 try{
 const razorpay = new Razorpay({
     key_id : process.env.key_razor_id,
     key_secret : process.env.key_razor_secret
 });
+const options = {
+    amount : amount*100,
+    currency,
+    receipt,
+    payment_capture: 1,
+};
 const order = await razorpay.orders.create(options);
-res.send({message : "okk",order : order})
+res.status(200).json(order);
 }catch(error){
     res.send({message: error});
 }
