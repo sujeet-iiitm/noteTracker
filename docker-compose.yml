@@ -2,10 +2,12 @@ version: "3.9"
 services:
   db:
     image: postgres:16-alpine
+    container_name: notes-db
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notes
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -20,26 +22,44 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+    container_name: notes-api
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql://postgres:postgres@db:5432/notes?schema=public"
-      PORT: 3000
-      CORS_ORIGIN: http://localhost:5173
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${PORT}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      bcrypt_salt_rounds: ${bcrypt_salt_rounds}
+      bcrypt_passsword: ${bcrypt_passsword}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: ${NODE_ENV}
+      key_razor_id: ${key_razor_id}
+      key_razor_secret: ${key_razor_secret}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+      VITE_GOOGLE_CLIENT_SECRET: ${VITE_GOOGLE_CLIENT_SECRET}
     ports:
       - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
 
   web:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        VITE_GOOGLE_CLIENT_SECRET: ${VITE_GOOGLE_CLIENT_SECRET}
+        VITE_key_id_razor: ${VITE_key_id_razor}
+        VITE_key_secret_razor: ${VITE_key_secret_razor}
+    container_name: notes-web
     depends_on:
       - api
-    environment:
-      VITE_API_BASE_URL: "http://localhost:3000"
     ports:
-      - "5173:80"
+      - "5173:5173"
 
 volumes:
   db-data:

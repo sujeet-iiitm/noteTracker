@@ -14,7 +14,6 @@
   "dependencies": {
     "@notes/db": "file:packages/databases",
     "@react-oauth/google": "^0.12.2",
-    "@repo/ui": "*",
     "@tailwindcss/vite": "^4.1.12",
     "axios": "1.7.8",
     "lucide-react": "^0.541.0",

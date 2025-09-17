@@ -1,29 +1,36 @@
-# --- deps
-FROM node:20-alpine AS deps
+FROM node:20-bookworm
+
 WORKDIR /app
-COPY package.json package-lock.json turbo.json ./
+
+RUN apt-get update && apt-get install -y \
+  openssl \
+  netcat-openbsd \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json turbo.json ./
 COPY apps/backend/package.json apps/backend/
 COPY packages/databases/package.json packages/databases/
 COPY packages/typescript-config/package.json packages/typescript-config/
-RUN npm ci
 
-# --- build everything (simple + reliable)
-FROM node:20-alpine AS build
-WORKDIR /app
+# Install dependencies
+RUN npm install
+RUN npm install -g typescript prisma
+
+# Copy the full monorepo
 COPY . .
-RUN npm run build
 
-# --- runtime
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-# copy built backend and needed node_modules, prisma schema
-COPY --from=build /app/apps/backend/dist apps/backend/dist
-COPY --from=build /app/node_modules node_modules
-COPY --from=build /app/packages/databases/node_modules packages/databases/node_modules
-COPY --from=build /app/packages/databases/prisma packages/databases/prisma
-COPY apps/backend/package.json apps/backend/
-COPY packages/databases/package.json packages/databases/
-COPY turbo.json package.json ./
-# Run prisma generate + migrate then start server
-CMD ["sh", "-c", "npx prisma generate --schema packages/databases/prisma/schema.prisma && npx prisma migrate deploy --schema packages/databases/prisma/schema.prisma && node apps/backend/dist/index.js"]
+# Generate Prisma client (works without DB)
+RUN npx prisma generate --schema=/app/packages/databases/prisma/schema.prisma
+
+WORKDIR /app/apps/backend
+
+EXPOSE 3000
+
+# Copy helper scripts
+COPY wait-for-db.sh /app/wait-for-db.sh
+COPY apps/backend/scripts/start.sh ./start.sh
+RUN chmod +x /app/wait-for-db.sh ./start.sh
+
+# Run migrations + start API at container startup
+# (not during build!)
+CMD ["/bin/sh", "-c", "/app/wait-for-db.sh && npx prisma migrate deploy --schema=/app/packages/databases/prisma/schema.prisma && npm run dev"]
