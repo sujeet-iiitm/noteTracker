@@ -12,9 +12,13 @@ import { prisma } from '@notes/db';
 import { 
   startOfWeek, endOfWeek, 
   startOfMonth, endOfMonth, 
-  startOfYear, endOfYear 
+  startOfYear, endOfYear,
+  startOfDay , endOfDay,
 } from "date-fns";
 
+const now = new Date();
+const todayStart = startOfDay(now);
+const todayEnd = endOfDay(now);
 
 router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response) => {
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
@@ -24,6 +28,20 @@ router.post('/createNote', userVerifyMiddleware, async(req:Request, res:Response
         res.status(400).json({ error: 'Title and description are required' });
         return;
     }
+    const notesCount = await prisma.note.count({
+      where:{
+        userId : userId,
+        createdAt : {
+          gte : todayStart,
+          lte : todayEnd,
+        }
+      }
+    })
+
+    if(notesCount>=100){
+      return res.status(200).json({message : "100 notes/Day limits reached. ComeTomorrow again!.."})
+    }
+    
     try{
         await prisma.note.create({
             data: {

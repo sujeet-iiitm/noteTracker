@@ -6,6 +6,10 @@ declare global {
   interface Window {
     Razorpay: any;
   }
+  interface ImportMetaEnv {
+    readonly VITE_key_id_razor: string;
+    // add other custom env variables here if needed
+  }
 }
 
 interface DonationFormData {
@@ -95,6 +99,7 @@ const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     order_id: order.id,
     handler: function (response: RazorpayResponse) {
       toast.success(`Thank you ${formData.name} for buying me a coffee! ☕ 😊`);
+      console.log(response);
     },
     prefill: {
       name: formData.name,

@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Plus, Notebook, Calendar, Loader } from 'lucide-react';
 import { useNotes } from '../Hooks/useNotes';
 
 const Home: React.FC = () => {
-  const { notes, loading } = useNotes();
+  const { notes, loading, fetchNotes } = useNotes();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   const stats = [
     {
@@ -30,7 +34,7 @@ const Home: React.FC = () => {
     },
   ];
 
-  const recentNotes = notes.allNotes.slice(0, 3);
+  const recentNotes = Array.isArray(notes.allNotes) ? notes.allNotes.slice(0, 3) : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -60,19 +64,23 @@ const Home: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-            <div className="bg-card border border-border rounded-lg shadow-sm">
-      <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
-        <h4 className="text-sm font-medium text-center">
-          Total Notes Saved till :
-        </h4>
-        <Notebook className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="p-6 pt-0">
-        <div className="text-2xl font-bold">{notes.allNotes.length}</div>
-        <p className="text-xs text-muted-foreground"><br/>
-          This was you total Notes saved Count.
-        </p>
-      </div>
+      <div className="bg-card border border-border rounded-lg shadow-sm">
+        <div className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
+          <h4 className="text-sm font-medium text-center">
+            Total Notes Saved Till Today : 
+          </h4>
+          <Notebook className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="p-6 pt-0">
+          {loading ? (
+            <Loader />
+          ) : (
+            <div className="text-2xl font-bold">{notes.allNotes.length}</div>
+          )}
+          <p className="text-xs text-muted-foreground"><br/>
+            This was your total Notes saved Count.
+          </p>
+        </div>
       </div>
       <div className="grid grid-cols-1 space-y-3 md:grid-cols-3 gap-3">
         {stats.map((stat, index) => {
@@ -107,9 +115,9 @@ const Home: React.FC = () => {
         <div className="p-6 pt-0">
           {loading ? (
             <div className='flex items-center justify-center'>
-            <Loader className="w-6 h-6 animate-spin" />
-            <br/>
-            <span >Loading Your Recent Activities...</span>
+              <Loader className="w-6 h-6 animate-spin" />
+              <br />
+              <span>Loading Your Recent Activities...</span>
             </div>
           ) : recentNotes.length === 0 ? (
             <div className="text-muted-foreground">No recent notes found.</div>

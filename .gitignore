@@ -9,3 +9,6 @@ build
 **/dist
 **/.turbo
 **/.vite
+aws/
+awscliv2.zip
+package-lock.json

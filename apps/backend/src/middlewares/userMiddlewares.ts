@@ -5,6 +5,7 @@ import { Request , Response, NextFunction } from 'express';
 // const prisma = new PrismaClient().$extends(withAccelerate());
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -45,3 +46,17 @@ export const userVerifyMiddleware = async(req:Request, res:Response, next:NextFu
         return res.status(401).json({ message : 'Token Expired -or- Invalid token' });
     }
 };
+
+export const signupRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5,
+    message: {
+        error: 'Trying to be smart!... Leave it'
+    },
+    standardHeaders: true, //new-one
+    legacyHeaders: false, //old-ones
+    handler: (req: Request, res: Response) => {
+        console.log("Rate limit exceeded for your IP");
+        res.status(429).json({ error: "Too many signup attempts. Please try again later." });
+    }
+});

@@ -25,10 +25,10 @@ const LoginPage: React.FC = () => {
         navigate('/dashboard'); 
     }
     else{
-    navigate('/login')
+    // navigate('/login') 
     }
     }catch(error){
-    navigate('/login')
+    // navigate('/login') 
     }
     }
   

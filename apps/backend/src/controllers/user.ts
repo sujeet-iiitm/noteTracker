@@ -1,5 +1,5 @@
 import { Request , Response } from 'express';
-import { userSigninMiddleware, userVerifyMiddleware } from "../middlewares/userMiddlewares.js";
+import { userSigninMiddleware, userVerifyMiddleware, signupRateLimiter } from "../middlewares/userMiddlewares.js";
 import { OAuth2Client } from 'google-auth-library';
 import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
@@ -16,7 +16,7 @@ const { Router } = express;
 const router = Router();
 import { prisma } from '@notes/db';
 
-router.post('/signup', async (req:Request, res:Response) => {
+router.post('/signup', signupRateLimiter, async (req:Request, res:Response) => {
     const user = req.body;
     const { name,email,password } = user;
     if (!email || !name || !password) {
