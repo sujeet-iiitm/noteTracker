@@ -1,13 +1,12 @@
-import { prisma } from '@notes/db';
-import { Request , Response, NextFunction } from 'express';
-// import { PrismaClient } from '@prisma/client';
-// import { withAccelerate } from '@prisma/extension-accelerate';
-// const prisma = new PrismaClient().$extends(withAccelerate());
-import jwt, { JwtPayload } from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 dotenv.config();
+import type { Request , Response, NextFunction } from 'express';
+import { PrismaClient } from '@notes/db'
+import { withAccelerate } from '@notes/db'
+const prisma = new PrismaClient().$extends(withAccelerate())
+import jwt, {type JwtPayload } from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import rateLimit from 'express-rate-limit';
 
 export const userSigninMiddleware = async(req:Request, res:Response, next:NextFunction) => {
     const user = req.body;
@@ -18,11 +17,10 @@ export const userSigninMiddleware = async(req:Request, res:Response, next:NextFu
     const User = await prisma.user.findUnique({
         where: { email: email },
     });
-        console.log(User);
     if (!User) {
         return res.status(404).json({ error: 'User not found' });
     }
-    const hashedPassword = User.password;   
+    const hashedPassword = User.password || "";   
     const isMatch = await bcrypt.compare(password, hashedPassword);
     if (!isMatch) {
         console.log(isMatch);
@@ -47,6 +45,7 @@ export const userVerifyMiddleware = async(req:Request, res:Response, next:NextFu
     }
 };
 
+
 export const signupRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5,
@@ -55,7 +54,7 @@ export const signupRateLimiter = rateLimit({
     },
     standardHeaders: true, //new-one
     legacyHeaders: false, //old-ones
-    handler: (req: Request, res: Response) => {
+    handler: (req, res) => {
         console.log("Rate limit exceeded for your IP");
         res.status(429).json({ error: "Too many signup attempts. Please try again later." });
     }

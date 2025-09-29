@@ -1,28 +1,42 @@
-import { Request , Response } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
+import type { Request , Response } from 'express';
 import { userSigninMiddleware, userVerifyMiddleware, signupRateLimiter } from "../middlewares/userMiddlewares.js";
 import { OAuth2Client } from 'google-auth-library';
 import Razorpay from 'razorpay';
-import dotenv from 'dotenv';
-dotenv.config();
-
-// import { prisma } from '@repo/db';
-// import { withAccelerate } from '@repo/db';
-// const prisma = new prisma().$extends(withAccelerate());
-
-import jwt, { JwtPayload } from "jsonwebtoken";
+import { z , email } from "zod";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express from 'express';
 const { Router } = express;
 const router = Router();
-import { prisma } from '@notes/db';
 
+import { PrismaClient } from '@notes/db'
+import { withAccelerate } from '@notes/db'
+const prisma = new PrismaClient().$extends(withAccelerate())
+
+export interface Env{
+    DATABASE_URL: string
+}
+const userSchema = z.object({
+    name : z.string(),
+    email : email(),
+    password : z.string().min(8)
+})
 router.post('/signup', signupRateLimiter, async (req:Request, res:Response) => {
     const user = req.body;
     const { name,email,password } = user;
     if (!email || !name || !password) {
         return res.status(400).json({ error: 'Email, name, and password are required' });
     }
-    
+    const result = userSchema.safeParse(req.body);
+
+    if (!result.success) {
+    return res.status(400).json({
+      message: "Validation error",
+      errors: result.error.format(),
+    });
+   }
     const existingUser = await prisma.user.findUnique({
         where: { email: email },
     });
@@ -74,7 +88,7 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
     });
     res.cookie("token", token, {
      httpOnly: true,
-     secure: false,
+     secure: true,
      sameSite: 'lax',
      maxAge: 7 * 24 * 60 * 60 * 1000,
      path : '/'
@@ -83,19 +97,25 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
 });
 
 router.get('/userDetails', userVerifyMiddleware , async(req:Request , res:Response) => {
-    const userId = req.params.userId;
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET as string) as JwtPayload;
+    const userId = decoded.id;
+
     const userDetails = await prisma.user.findUnique({
-        where : {userId},
+        where: { id: userId },
     });
-    const name = JSON.stringify(userDetails.name);
-    const email = JSON.stringify(userDetails.email);
-    const notesCount = JSON.stringify(userDetails.Notes.size());
-    const createdAt = JSON.stringify(userDetails.createdAt);
+
     if(!userDetails){
         return res.status(404).json({ message  : "user not found"});
     }
+
+    const notesCount = await prisma.note.count({ where: { userId: userDetails.id } });
+
     return res.status(200).send({
-        name,email,notesCount,createdAt})
+        name: userDetails.name,
+        email: userDetails.email,
+        notesCount,
+        createdAt: userDetails.createdAt
+    });
 });
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -103,35 +123,45 @@ const jwt_secret_key = process.env.JWT_SECRET || "";
 
 router.post('/googleLogin',async(require:Request,res:Response) => {
     const { credential } = require.body;
-    try{
+    try {
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            return res.status(500).json({ error: "Google client ID is not set in environment variables" });
+        }
         const ticket = await client.verifyIdToken({
-            idToken : credential,
-            audience : process.env.GOOGLE_CLIENT_ID
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID as string
         });
         const payload = ticket.getPayload();
-        if(!payload) return res.status(401).json({error:"invalid Token"});
+        if (!payload) return res.status(401).json({ error: "invalid Token" });
         const { name, email } = payload;
+
+        if (!email || !name) {
+            return res.status(400).json({ error: "Email and name are required from Google payload" });
+        }
 
         let userr = await prisma.user.findUnique({ where: { email } });
         if (!userr) {
-          await prisma.user.create({ data: { email, name } });
-          userr = await prisma.user.findUnique({ where: { email } });
+            await prisma.user.create({ data: { email, name } });
+            userr = await prisma.user.findUnique({ where: { email } });
         }
+        if (!userr) {
+            return res.status(500).json({ error: "User creation failed" });
+        }
+        const notesCount = await prisma.note.count({ where: { userId: userr.id } });
         const userDetails = JSON.stringify({
             name: userr.name,
             createdAt: userr.createdAt,
             email: userr.email,
             userId: userr.id,
-            notesCount: await prisma.note.count({where: {userId : userr.id} })
-
+            notesCount
         });
 
-        const token = jwt.sign({id: userr.id},jwt_secret_key,
-            {expiresIn : '7d'}
-        )
+        const token = jwt.sign({ id: userr.id }, jwt_secret_key,
+            { expiresIn: '7d' }
+        );
         res.cookie("token", token, {
          httpOnly: true,
-         secure: false,
+         secure: true,
          sameSite: 'lax',
          maxAge: 7 * 24 * 60 * 60 * 1000,
          path : '/'
@@ -193,7 +223,7 @@ router.delete('/deleteAccount', userVerifyMiddleware,  async(req: Request, res: 
     })
         res.clearCookie('token',{
         httpOnly : true,
-        secure: false,
+        secure: true,
         sameSite : 'lax',
     });
         res.status(200).send({message : "user Deleted Successfully!.."});
@@ -224,9 +254,16 @@ router.get("/me", async (req: Request, res: Response) => {
 router.post('/buyMeACoffee', userVerifyMiddleware , async (req : Request , res : Response) => {
     const { amount, currency = "INR", receipt = `receipt_${Date.now()}` } = req.body;
 try{
+const key_id = process.env.key_razor_id;
+const key_secret = process.env.key_razor_secret;
+
+if (!key_id || !key_secret) {
+    return res.status(500).json({ message: "Razorpay API keys are not set in environment variables" });
+}
+
 const razorpay = new Razorpay({
-    key_id : process.env.key_razor_id,
-    key_secret : process.env.key_razor_secret
+    key_id,
+    key_secret
 });
 const options = {
     amount : amount*100,
@@ -244,7 +281,7 @@ res.status(200).json(order);
 router.post('/logout', async(req: Request, res: Response) => {
     res.clearCookie('token',{
         httpOnly : true,
-        secure: false,
+        secure: true,
         sameSite : 'lax',
         path : '/'
     });

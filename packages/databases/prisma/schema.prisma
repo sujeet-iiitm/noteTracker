@@ -6,14 +6,13 @@
 
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
-
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -24,12 +23,15 @@ model User {
 }
 
 model Note {
-  id        String   @id @default(cuid())
-  title     String   @db.VarChar(255)
-  description String @db.Text()
-  shortNote String?  @db.Text()
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt()
+  id        String    @id @default(cuid())
+  title     String    @db.VarChar(255)
+  description String  @db.Text()
+  shortNote String?   @db.Text()
+  isShared  Boolean   @default(false)
+  shareSlug String?   @unique
+  expiryTime DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt()
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
 }

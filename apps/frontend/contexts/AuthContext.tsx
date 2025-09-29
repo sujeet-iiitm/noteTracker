@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { data } from 'react-router-dom';
 
 interface User {
   id: string;
