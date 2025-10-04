@@ -14,24 +14,34 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   name      String?
   password  String?
-  createdAt DateTime @default(now())
-  Notes     Note[]
+  createdAt DateTime  @default(now())
+  Subjects  Subject[] 
+}
+
+model Subject {
+  id       String  @unique @default(uuid())
+  title    String
+  userId   String
+  user     User    @relation(fields: [userId], references: [id])
+  Notes    Note[] 
+  @@index([userId])
 }
 
 model Note {
-  id        String    @id @default(cuid())
-  title     String    @db.VarChar(255)
-  description String  @db.Text()
-  shortNote String?   @db.Text()
-  isShared  Boolean   @default(false)
-  shareSlug String?   @unique
-  expiryTime DateTime @default(now())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt()
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  id          String    @id @default(cuid())  
+  title       String    @db.VarChar(255)
+  description String    @db.Text()
+  shortNote   String?   @db.Text()
+  isShared    Boolean   @default(false)
+  shareSlug   String?   @unique
+  expiryTime  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt()
+  subjectId   String
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  @@index([subjectId,shareSlug])
 }

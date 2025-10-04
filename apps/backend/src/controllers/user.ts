@@ -84,7 +84,7 @@ router.post('/signin', userSigninMiddleware, async (req:Request, res:Response) =
         createdAt: User.createdAt,
         email: User.email,
         userId: User.id,
-        notesCount: await prisma.note.count({where: {userId : User.id} })
+        notesCount: await prisma.note.count({where: {subject: {userId : User.id} }})
     });
     res.cookie("token", token, {
      httpOnly: true,
@@ -108,7 +108,7 @@ router.get('/userDetails', userVerifyMiddleware , async(req:Request , res:Respon
         return res.status(404).json({ message  : "user not found"});
     }
 
-    const notesCount = await prisma.note.count({ where: { userId: userDetails.id } });
+    const notesCount = await prisma.note.count({ where: {subject : { userId: userDetails.id } }});
 
     return res.status(200).send({
         name: userDetails.name,
@@ -147,7 +147,7 @@ router.post('/googleLogin',async(require:Request,res:Response) => {
         if (!userr) {
             return res.status(500).json({ error: "User creation failed" });
         }
-        const notesCount = await prisma.note.count({ where: { userId: userr.id } });
+        const notesCount = await prisma.note.count({ where: {subject : { userId: userr.id } }});
         const userDetails = JSON.stringify({
             name: userr.name,
             createdAt: userr.createdAt,

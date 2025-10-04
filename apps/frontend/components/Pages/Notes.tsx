@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Edit, Trash2, Search, Calendar, X, Loader, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Calendar, X, Loader, Download, NotebookIcon } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ShareNoteCard from '../Layout/ShareNoteCard';
 import jsPDF from 'jspdf';
 
@@ -16,11 +16,13 @@ interface Note {
   updatedAt: string;
   userId: string;
 }
+
 const darkMode: boolean = localStorage.getItem('theme') === 'dark';
 
 const Notes: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { subjectId } = useParams<{ subjectId: string }>();
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -37,24 +39,19 @@ const Notes: React.FC = () => {
   const fetchNotes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/note/allNotes', {
+      console.log(subjectId);
+      const response = await axios.get(`http://localhost:3000/api/note/subject/${subjectId}/notes`, {
         withCredentials: true,
       });
-      const notesData = Array.isArray(response.data.notes)
-        ? response.data.notes
-        : Array.isArray(response.data)
-          ? response.data
-          : [];
-      setNotes(notesData);
+      setNotes(Array.isArray(response.data.notes) ? response.data.notes : []);
+      setLoading(false);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..<br />for Your Safety!<br />Logging-Out</>);
-        toast.caller('please Signin Again!..');
+        toast.error('UnAuthenticated Request! Logging-Out');
         logout();
         navigate('/login');
       } else {
         toast.error('Error fetching notes');
-        console.error('Error fetching notes:', error);
       }
     } finally {
       setLoading(false);
@@ -62,8 +59,9 @@ const Notes: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (subjectId) fetchNotes();
+    // eslint-disable-next-line
+  }, [subjectId]);
 
   const handleDownload = (note: Note | null) => {
     if (!note) return;
@@ -122,10 +120,10 @@ const Notes: React.FC = () => {
     setSubmitting(true);
     try {
       if (editingNote) {
+        // edit note
         const response = await axios.put(
-          'http://localhost:3000/api/note/updateNote',
+          `http://localhost:3000/api/note/updateNote/${subjectId}/${editingNote.id}`,
           {
-            id: editingNote.id,
             title: formData.title,
             description: formData.description,
             shortNote: formData.shortNote,
@@ -135,21 +133,16 @@ const Notes: React.FC = () => {
         setNotes(
           notes.map((note) =>
             note.id === editingNote.id
-              ? {
-                ...note,
-                title: formData.title,
-                description: formData.description,
-                shortNote: formData.shortNote,
-                updatedAt: new Date().toISOString(),
-              }
+              ? { ...note, ...formData, updatedAt: new Date().toISOString() }
               : note
           )
         );
         toast.success(response.data.message || 'Note updated successfully');
         setEditingNote(null);
       } else {
+        // add note
         const response = await axios.post(
-          "http://localhost:3000/api/note/createNote",
+          `http://localhost:3000/api/note/createNote/${subjectId}`,
           {
             title: formData.title,
             description: formData.description,
@@ -164,15 +157,13 @@ const Notes: React.FC = () => {
       setFormData({ title: '', description: '', shortNote: '' });
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..<br />for Your Safety!<br />Logging-Out</>);
-        toast.caller('please Signin Again!..');
+        toast.error('UnAuthenticated Request! Logging-Out');
         logout();
         navigate('/login');
       } else if (error.response?.status === 400) {
         toast.error(error.response.data.error || 'Invalid input');
       } else {
-        toast.error(error.response?.data?.error || 'Error saving note. Try again.');
-        console.error('Error saving note:', error);
+        toast.error('Error saving note. Try again.');
       }
     } finally {
       setSubmitting(false);
@@ -190,22 +181,20 @@ const Notes: React.FC = () => {
 
   const handleDelete = async (noteId: string) => {
     try {
-      const response = await axios.delete('http://localhost:3000/api/note/deleteNote', {
-        data: { id: noteId },
-        withCredentials: true,
-      });
+      const response = await axios.delete(
+        `http://localhost:3000/api/note/deleteNote/${subjectId}/${noteId}`,
+        { withCredentials: true }
+      );
       setNotes(notes.filter((note) => note.id !== noteId));
       toast.success(response.data.message || 'Note deleted successfully');
       setDeleteConfirmNote(null);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        toast.error(<>UnAuthenticated Request Spotted!..<br />for Your Safety!<br />Logging-Out</>);
-        toast.caller('please Signin Again!..');
+        toast.error('UnAuthenticated Request! Logging-Out');
         logout();
         navigate('/login');
       } else {
-        toast.error(error.response?.data?.error || 'Error deleting note. Try again.');
-        console.error('Error deleting note:', error);
+        toast.error('Error deleting note. Try again.');
       }
     }
   };
@@ -234,7 +223,7 @@ const Notes: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1>My Notes</h1>
-          <p className="text-muted-foreground">Manage and organize your daily notes</p>
+          <p className="text-muted-foreground">Manage and organize your notes under this subject</p>
         </div>
         <button
           onClick={() => setIsAddDialogOpen(true)}
@@ -244,64 +233,52 @@ const Notes: React.FC = () => {
           <span>Add Note</span>
         </button>
       </div>
-
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4"/>
         <input
           placeholder="Search notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className={`w-full pl-10 pr-3 py-2 
+          className={`w-full pl-10 pr-3 py-2
             ${darkMode
               ? 'bg-black text-white border-gray-600 placeholder-gray-400'
               : 'bg-white text-black border-gray-300 placeholder-gray-500'}
             border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent`}
         />
       </div>
-
       {loading && (
         <div className="p-6 flex items-center justify-center min-h-96">
           <div className="flex items-center space-x-2">
-            <Loader className="w-6 h-6 animate-spin"></Loader>
+            <Loader className="w-6 h-6 animate-spin"/>
             <span>Loading notes...</span>
           </div>
         </div>
       )}
-
       {!loading && filteredNotes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => (
-            <div
-              key={note.id}
-              className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
+            <div key={note.id} className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="line-clamp-2 mb-2">{note.title}</h3>
                     <div className="flex items-center text-muted-foreground mb-3">
-                      <Calendar className="w-3 h-3 mr-1" />
+                      <Calendar className="w-3 h-3 mr-1"/>
                       <span className="text-sm">{formatDate(note.createdAt)}</span>
                     </div>
                   </div>
                   <div className="flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <ShareNoteCard note={note} />
-                    <button
-                      onClick={() => handleDownload(note)}
-                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors"
-                    >
+                    <ShareNoteCard note={note}/>
+                    <button onClick={() => handleDownload(note)}
+                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors">
                       <Download className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleEdit(note)}
-                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors"
-                    >
+                    <button onClick={() => handleEdit(note)}
+                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => setDeleteConfirmNote(note)}
-                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors"
-                    >
+                    <button onClick={() => setDeleteConfirmNote(note)}
+                      className="p-1 text-muted-foreground hover:text-destructive hover:bg-accent rounded transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -317,10 +294,9 @@ const Notes: React.FC = () => {
           ))}
         </div>
       )}
-
       {showEmptyState && (
         <div className="text-center py-12">
-          <div className="mx-auto h-12 w-12 text-muted-foreground mb-4">📝</div>
+          <NotebookIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">No notes found</h3>
           <p className="text-muted-foreground mb-4">
             Get started by creating your first note.
@@ -329,12 +305,11 @@ const Notes: React.FC = () => {
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors inline-flex items-center space-x-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4"/>
             <span>Add Your First Note</span>
           </button>
         </div>
       )}
-
       {!loading && !showEmptyState && filteredNotes.length === 0 && (
         <div className="text-center py-12">
           <div className="mx-auto h-12 w-12 text-muted-foreground mb-4">🔍</div>
@@ -344,7 +319,6 @@ const Notes: React.FC = () => {
           </p>
         </div>
       )}
-
       {(isAddDialogOpen || editingNote) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background border border-border rounded-lg shadow-lg w-full max-w-lg">
@@ -358,11 +332,9 @@ const Notes: React.FC = () => {
                       : 'Create a new note to track your thoughts and ideas.'}
                   </p>
                 </div>
-                <button
-                  onClick={closeAllModals}
-                  className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
-                >
-                  <X className="w-4 h-4" />
+                <button onClick={closeAllModals}
+                  className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors">
+                  <X className="w-4 h-4"/>
                 </button>
               </div>
             </div>
@@ -435,7 +407,7 @@ const Notes: React.FC = () => {
                 >
                   {submitting ? (
                     <>
-                      <Loader className="w-4 h-4 animate-spin" />
+                      <Loader className="w-4 h-4 animate-spin"/>
                       <span>{editingNote ? 'Updating...' : 'Creating...'}</span>
                     </>
                   ) : (
@@ -447,7 +419,6 @@ const Notes: React.FC = () => {
           </div>
         </div>
       )}
-
       {deleteConfirmNote && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background border border-border rounded-lg shadow-lg w-full max-w-md">

@@ -26,7 +26,7 @@ const SignupPage: React.FC = () => {
         navigate('/dashboard'); 
     }
     else{
-    // navigate('/login') 
+    // navigate('/login')
     }
     }catch(error){
     // navigate('/login')
@@ -99,7 +99,7 @@ const SignupPage: React.FC = () => {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   placeholder="Enter your email"
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full pl-10 pr-3 py-2 
@@ -154,15 +154,17 @@ const SignupPage: React.FC = () => {
               <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
-          
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              toast.error("Google Signin failed");
-            }}
-            useOneTap // optional: enables One Tap login prompt
-          />
-          
+
+          <div className="w-full flex justify-center">
+            <div className="w-full max-w-[360px]">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error("Google Signin failed")}
+                useOneTap
+              />
+            </div>
+          </div>
+
           <div className="text-center text-sm">
             Already have an account?{' '}
             <Link to="/login" className="text-primary hover:underline">

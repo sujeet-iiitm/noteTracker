@@ -9,6 +9,7 @@ import Home from '../components/Pages/Home';
 import Notes from '../components/Pages/Notes';
 import User from '../components/Pages/User';
 import LandingPage from '../components/Pages/LandingPage';
+import Subject from '../components/Pages/Subjects'
 import ViewSharedNote from '../components/Pages/ViewSharedNote';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -45,7 +46,8 @@ function AppRoutes({ showLanding, setShowLanding }: { showLanding: boolean; setS
             }
           >
             <Route index element={<Home />} />
-            <Route path="notes" element={<Notes />} />
+            <Route path="subject" element={<Subject />} />
+            <Route path="subject/:subjectId" element={<Notes />} />
             <Route path="user" element={<User />} />
           </Route>
 

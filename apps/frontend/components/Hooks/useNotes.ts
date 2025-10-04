@@ -33,19 +33,19 @@ export function useNotes() {
 const fetchNotes = useCallback(async () => {
   setLoading(true);
   try {
-    const [allRes, weekRes, monthRes, yearRes] = await Promise.all([
-      axios.get<NotesDetails[]>("/api/note/allNotes", { withCredentials: true }),
-      axios.get<NotesDetails[]>("/api/note/weeklyNotes", { withCredentials: true }),
-      axios.get<NotesDetails[]>("/api/note/monthlyNotes", { withCredentials: true }),
-      axios.get<NotesDetails[]>("/api/note/yearlyNotes", { withCredentials: true }),
-    ]);
+const [allRes, weekRes, monthRes, yearRes] = await Promise.all([
+  axios.get<NotesDetails[]>("http://localhost:3000/api/note/allNotes", { withCredentials: true }),
+  axios.get<NotesDetails[]>("http://localhost:3000/api/note/weeklyNotes", { withCredentials: true }),
+  axios.get<NotesDetails[]>("http://localhost:3000/api/note/monthlyNotes", { withCredentials: true }),
+  axios.get<NotesDetails[]>("http://localhost:3000/api/note/yearlyNotes", { withCredentials: true }),
+]);
 
-    setNotes({
-      allNotes: Array.isArray(allRes.data) ? allRes.data : [],
-      weeklyNotes: Array.isArray(weekRes.data) ? weekRes.data : [],
-      monthlyNotes: Array.isArray(monthRes.data) ? monthRes.data : [],
-      yearlyNotes: Array.isArray(yearRes.data) ? yearRes.data : [],
-    });
+setNotes({
+  allNotes: Array.isArray(allRes.data) ? allRes.data : [],
+  weeklyNotes: Array.isArray(weekRes.data) ? weekRes.data : [],
+  monthlyNotes: Array.isArray(monthRes.data) ? monthRes.data : [],
+  yearlyNotes: Array.isArray(yearRes.data) ? yearRes.data : [],
+});
 
     fetchedRef.current = true;
   } catch (e) {
@@ -57,11 +57,10 @@ const fetchNotes = useCallback(async () => {
 }, []);
 
 
-  useEffect(() => {
-    if (!fetchedRef.current) {
-      fetchNotes();
-    }
-  }, [fetchNotes]);
+useEffect(() => {
+  fetchNotes();
+}, [fetchNotes]);
+
 
   // allow manual re-fetch
   return { notes, loading, fetchNotes };

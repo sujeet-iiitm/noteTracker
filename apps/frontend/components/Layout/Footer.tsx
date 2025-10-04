@@ -10,6 +10,9 @@ declare global {
     readonly VITE_key_id_razor: string;
     // add other custom env variables here if needed
   }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
 }
 
 interface DonationFormData {

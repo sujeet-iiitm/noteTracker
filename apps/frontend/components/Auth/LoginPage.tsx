@@ -25,10 +25,10 @@ const LoginPage: React.FC = () => {
         navigate('/dashboard'); 
     }
     else{
-    // navigate('/login') 
+    // navigate('/login')
     }
     }catch(error){
-    // navigate('/login') 
+    // navigate('/login')
     }
     }
   
@@ -136,13 +136,16 @@ const LoginPage: React.FC = () => {
           </div>
           
           {/* Google login button */}
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              toast.error("Google Signin failed");
-            }}
-            useOneTap
-          />
+          <div className="w-full flex justify-center">
+            <div className="w-full max-w-[360px]">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error("Google Signin failed")}
+                useOneTap
+              />
+            </div>
+          </div>
+
           
           <div className="text-center text-sm">
             Don't have an account?{' '}
