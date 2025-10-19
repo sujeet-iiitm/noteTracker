@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/controllers/notes.ts","./src/controllers/user.ts","./src/middlewares/userMiddlewares.ts","./src/routes/index.ts","./src/types/cookie-store.d.ts"],"version":"5.8.3"}
+{"root":["./src/index.ts","./src/controllers/notes.ts","./src/controllers/password.ts","./src/controllers/user.ts","./src/middlewares/userMiddlewares.ts","./src/routes/index.ts","./src/types/cookie-store.d.ts"],"version":"5.8.3"}

@@ -4,13 +4,17 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import ProtectedRoute from '../components/Auth/ProtectedRoute';
 import LoginPage from '../components/Auth/LoginPage';
 import SignupPage from '../components/Auth/SignupPage';
-import DashboardLayout from '../components/Layout/DashboardLayout';
+import DashboardLayout from '../components/Layout/DashboardLayoutnoteTracker';
 import Home from '../components/Pages/Home';
 import Notes from '../components/Pages/Notes';
 import User from '../components/Pages/User';
 import LandingPage from '../components/Pages/LandingPage';
 import Subject from '../components/Pages/Subjects'
 import ViewSharedNote from '../components/Pages/ViewSharedNote';
+import SelectService from '../components/Pages/SelectService'
+import PasswordManagerLayout from '../components/Layout/DashboardLayoutPM';
+import PasswordManager from '../components/Pages/PasswordManager';
+
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState } from 'react';
@@ -20,7 +24,7 @@ function AppRoutes({ showLanding, setShowLanding }: { showLanding: boolean; setS
 
   const isSharedNoteRoute = location.pathname.startsWith("/note/viewNote");
 
-  if (isSharedNoteRoute) {
+  if (isSharedNoteRoute) {  
     return (
       <Routes>
         <Route path="/note/viewNote/:slug" element={<ViewSharedNote />} />
@@ -37,8 +41,14 @@ function AppRoutes({ showLanding, setShowLanding }: { showLanding: boolean; setS
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
+        <Route path='/SelectService'  
+            element={
+            <ProtectedRoute>
+              <SelectService />
+            </ProtectedRoute>
+         } />
           <Route
-            path="/dashboard"
+            path="/notetracker"
             element={
               <ProtectedRoute>
                 <DashboardLayout />
@@ -50,6 +60,16 @@ function AppRoutes({ showLanding, setShowLanding }: { showLanding: boolean; setS
             <Route path="subject/:subjectId" element={<Notes />} />
             <Route path="user" element={<User />} />
           </Route>
+
+          <Route path="/passwordManager" 
+            element={
+              <ProtectedRoute>
+                <PasswordManagerLayout />
+              </ProtectedRoute>
+            }
+            >
+              <Route index element={<PasswordManager />} />
+            </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

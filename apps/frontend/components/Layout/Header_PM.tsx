@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Home, FileText, User, Sun, Moon, LogOut } from 'lucide-react';
+import { User, Sun, Moon, LogOut } from 'lucide-react';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -17,39 +16,10 @@ const Header: React.FC = () => {
     setIsUserMenuOpen(false);
   };
 
-  const navItems = [
-    { path: '/notetracker', label: 'HOME', icon: Home },
-    { path: '/notetracker/subject', label: 'NOTES', icon: FileText },
-    { path: '/notetracker/user', label: 'USER', icon: User },
-  ];
-
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Left: Navigation */}
-        <nav className="flex space-x-8">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                  isActive 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
 
-        {/* Center: Dark Mode Toggle */}
         <div className="flex items-center space-x-2">
           <Sun className="w-4 h-4" />
           <button

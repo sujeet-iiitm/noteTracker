@@ -154,7 +154,7 @@ const Subjects: React.FC = () => {
   };
 
   const handleSubjectClick = (subjectId: string) => {
-    navigate(`/dashboard/subject/${encodeURIComponent(subjectId)}`);
+    navigate(`/notetracker/subject/${encodeURIComponent(subjectId)}`);
   };
 
   const formatDate = (dateString: string) => {

@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
     const response = await axios.get('http://localhost:3000/api/user/me',
       {withCredentials : true});
     if(JSON.stringify(response.status) === "200"){
-        navigate('/dashboard'); 
+        navigate('/SelectService'); 
     }
     else{
     // navigate('/login')
@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
       await login(email, password);
       setEmail("");
       setPassword("");
-      navigate('/dashboard');
+      navigate('/notetracker');
     } catch (err: any) {
       setError('Invalid email or password');
     } finally {
@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       await loginWithGoogle(credentialResponse);
-      navigate('/dashboard');
+      navigate('/notetracker');
     } catch (err) {
       setError('Google login failed');
     }

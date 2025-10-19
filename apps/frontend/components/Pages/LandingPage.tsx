@@ -1,7 +1,6 @@
 import { Notebook } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 export default function LandingPage({ onComplete }: { onComplete: () => void }) {
   const heroTextRef = useRef<HTMLHeadingElement | null>(null);
@@ -119,7 +118,7 @@ export default function LandingPage({ onComplete }: { onComplete: () => void }) 
     if (path === "noteTracker") {
       goToLoginWithAnimation();
     } else {
-      toast.error("Password Manager is being Designed, WAIT!..");
+      goToLoginWithAnimation();
     }
   };
 
@@ -164,24 +163,34 @@ export default function LandingPage({ onComplete }: { onComplete: () => void }) 
                 notetracker.sujeet.xyz
               </span>
             </div>
-
-            <nav className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
-              <button
-                onClick={() => handleNavClick("noteTracker")}
-                className="text-lg font-bold text-white hover:text-cyan-400 transition-colors duration-200"
-              >
-                noteTracker
-              </button>
-
-              <button
-                onClick={() => handleNavClick("passwordManager")}
-                className="text-lg font-bold text-gray-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                Password Manager
-              </button>
-
-              <p className="mt-1 sm:mt-0 text-xs text-gray-400">Services available</p>
-            </nav>
+          <div className="flex flex-col items-center">
+            {/* Main box */}
+            <div className="flex flex-col items-center bg-gray-900 rounded-lg px-6 py-4 gap-5 justify-center shadow-md w-full max-w-md">
+              <nav className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                <button
+                  onClick={() => handleNavClick("noteTracker")}
+                  className="text-lg font-bold text-white hover:text-cyan-400 transition-colors duration-200"
+                >
+                  noteTracker
+                </button>
+          
+                {/* Divider line between nav buttons */}
+                <div className="hidden sm:block h-6 border-l border-gray-600"></div>
+          
+                <button
+                  onClick={() => handleNavClick("passwordManager")}
+                  className="text-lg font-bold text-gray-400 hover:text-purple-400 transition-colors duration-200"
+                >
+                  Password Manager
+                </button>
+              </nav>
+            </div>
+          
+            {/* Text below, aligned right */}
+            <p className="text-sm text-gray-300 mt-2 text-right w-full max-w-md font-medium tracking-wide pr-2">
+              Services available
+            </p>
+          </div>
           </header>
 
           <main className="relative z-10 flex flex-col md:flex-row items-center justify-between min-h-[70vh] px-6 sm:px-12 gap-8">

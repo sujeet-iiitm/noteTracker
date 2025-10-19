@@ -59,3 +59,17 @@ export const signupRateLimiter = rateLimit({
         res.status(429).json({ error: "Too many signup attempts. Please try again later." });
     }
 });
+
+export const createPasswordRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    message: {
+        error: 'Trying to be smart!... Leave it'
+    },
+    standardHeaders: true, //new-one
+    legacyHeaders: false, //old-ones
+    handler: (req, res) => {
+        console.log("Rate limit exceeded for your IP");
+        res.status(429).json({ error: "Too many Password Saving attempts. Please try again later." });
+    }
+})

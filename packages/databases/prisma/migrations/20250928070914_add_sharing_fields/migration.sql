@@ -5,9 +5,9 @@
 
 */
 -- AlterTable
-ALTER TABLE "Note" ADD COLUMN     "expiryTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ALTER TABLE "public"."Note" ADD COLUMN     "expiryTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN     "isShared" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "shareSlug" TEXT;
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Note_shareSlug_key" ON "Note"("shareSlug");
+CREATE UNIQUE INDEX "Note_shareSlug_key" ON "public"."Note"("shareSlug");

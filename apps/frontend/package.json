@@ -15,6 +15,7 @@
     "@notes/db": "file:packages/databases",
     "@react-oauth/google": "^0.12.2",
     "@tailwindcss/vite": "^4.1.12",
+    "@types/three": "^0.180.0",
     "axios": "1.7.8",
     "gsap": "^3.13.0",
     "lucide-react": "^0.541.0",

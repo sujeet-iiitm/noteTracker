@@ -46,14 +46,14 @@ const Home: React.FC = () => {
       {/* Quick Actions */}
       <div className="flex gap-4">
         <button
-          onClick={() => navigate('/dashboard/subject')}
+          onClick={() => navigate('/notetracker/subject')}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Note</span>
         </button>
         <button
-          onClick={() => navigate('/dashboard/subject')}
+          onClick={() => navigate('/notetracker/subject')}
           className="border border-border bg-background text-foreground px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           View All Notes

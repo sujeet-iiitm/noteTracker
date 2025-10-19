@@ -79,6 +79,7 @@ router.put('/updateSubject', userVerifyMiddleware ,async (req: Request, res: Res
   }
 });
 
+
 router.delete('/deleteSubject', userVerifyMiddleware ,async (req: Request, res: Response) => {
   const userId = (jwt.verify(req.cookies.token, process.env.JWT_SECRET!) as JwtPayload).id;
   const subjectId = req.body.subjectId;

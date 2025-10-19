@@ -6,7 +6,7 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "Note" DROP CONSTRAINT "Note_userId_fkey";
+ALTER TABLE "public"."Note" DROP CONSTRAINT "Note_userId_fkey";
 
 -- AlterTable
 ALTER TABLE "Note" DROP COLUMN "userId",
